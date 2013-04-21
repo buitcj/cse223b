@@ -13,6 +13,9 @@
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 
+#define JSON_IS_AMALGAMATION
+#include <json/json.h>
+
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
@@ -21,8 +24,8 @@ using namespace ::apache::thrift::server;
 using boost::shared_ptr;
 
 using namespace std;
-using namespace  ::Tribbler;
-using namespace  ::KeyValueStore;
+using namespace Tribbler;
+using namespace KeyValueStore;
 
 class TribblerHandler : virtual public TribblerIf {
  public:
@@ -36,12 +39,76 @@ class TribblerHandler : virtual public TribblerIf {
   TribbleStatus::type CreateUser(const std::string& userid) {
     // Your implementation goes here
     printf("CreateUser\n");
-    return TribbleStatus::NOT_IMPLEMENTED;
+    string key = "user_list_jbu";
+    GetListResponse glr = GetList(key); 
+    if(glr.status != KVStoreStatus::OK)
+    {
+        // first time: we need to insert the list
+        // just add the list
+
+        // try to add it to the list
+        KVStoreStatus::type kvss = AddToList(key, userid);
+        if(kvss == KVStoreStatus::OK)
+        {
+            return TribbleStatus::OK;
+        }
+        else
+        {
+            // wtf ??? no corresponding error message *********************
+            return TribbleStatus::NOT_IMPLEMENTED;
+        }
+    }
+    else
+    {
+        // list exists
+        
+        // check if user exists
+        vector<string>& values= glr.values;
+        vector<string>::iterator iter;
+        bool found = false;
+        for(iter = values.begin(); iter != values.end(); iter++)
+        {
+            if(iter->compare(userid) == 0)
+            {
+                found = true;
+                break;
+            }
+        }
+
+        // user exists, don't do anything
+        if(found == true)
+        {
+            return TribbleStatus::EEXISTS;
+        }
+        // user doesn't exist, add it to the list
+        else
+        {
+            // try to add it to the list
+            KVStoreStatus::type kvss = AddToList(key, userid);
+            if(kvss == KVStoreStatus::OK)
+            {
+                return TribbleStatus::OK;
+            }
+            else
+            {
+                // wtf ??? no corresponding error message *********************
+                return TribbleStatus::NOT_IMPLEMENTED;
+            }
+        }
+    }
   }
 
   TribbleStatus::type AddSubscription(const std::string& userid, const std::string& subscribeto) {
     // Your implementation goes here
     printf("AddSubscription\n");
+
+    Json::Value root;
+    root["timestamp"] = Json::Value(555);
+
+
+    Json::StyledWriter writer;
+    string output_json = writer.write(root);
+
     return TribbleStatus::NOT_IMPLEMENTED;
   }
 
@@ -76,6 +143,19 @@ class TribblerHandler : virtual public TribblerIf {
   }
 
   // Functions from interacting with the storage RPC server
+  KeyValueStore::GetListResponse GetList(std::string key) {
+    boost::shared_ptr<TSocket> socket(new TSocket(_storageServer, _storageServerPort));
+    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    KeyValueStoreClient kv_client(protocol);
+    // Making the RPC Call
+    KeyValueStore::GetListResponse glr;
+    transport->open();
+    kv_client.GetList(glr, key);
+    transport->close();
+    return glr;
+  }
+
   KVStoreStatus::type AddToList(std::string key, std::string value) {
     boost::shared_ptr<TSocket> socket(new TSocket(_storageServer, _storageServerPort));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));

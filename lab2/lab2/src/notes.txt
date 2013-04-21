@@ -1,0 +1,20 @@
+struct KVStoreStatus {
+  enum type {
+    OK = 1,
+    EKEYNOTFOUND = 2,
+    EITEMNOTFOUND = 3,
+    EPUTFAILED = 4,
+    EITEMEXISTS = 5
+  };
+};
+
+struct TribbleStatus {
+  enum type {
+    OK = 1,
+    EEXISTS = 2,
+    INVALID_USER = 3,
+    INVALID_SUBSCRIBETO = 4,
+    NOT_IMPLEMENTED = 5
+  };
+};
+
