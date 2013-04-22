@@ -18,3 +18,41 @@ struct TribbleStatus {
   };
 };
 
+addSubscription
+removeSubscription
+postTribble // of one user
+getTribbles // of one user
+getTribblesBySubscription // of one user
+getSubscriptions // of one user
+
+OPTION 1
+string:user -> list:subscribees, list:tribble timestamps
+string:user+timestamp -> string:tribble
+
+OPTION 2
+string:"js_"+user -> list:subscribees
+string:"jts_"+user -> list:tribble timestamps
+string:"jt_"+user -> string: tribble
+
+addSubscription: 2 lookup "js_"+user and add to list, if not there
+removeSubscription: 2 lookup "js_"+user and remove from list if there
+postTribble: 2 lookup "jts_"+user and add a timestamp, then add "jt_"+user
+getTribbles: 1+n lookup "jts_"+user and then for each timestamp lookup "jt_"+user
+getTribblesBySubscription: 1 + |subscribees| + 100 look up subscribees, then for each subscribee, look up jts_+user for all the timetsamps
+getSubscriptions: 1 look up js+user
+
+OPTION 3
+string:"js_"+user -> list:subscribees
+string:"jts_"+user -> list:tribble timestamps
+string:"jt"+index+"_"+user -> string: some number of tribbles
+postTribble: 3 lookup for index, lookup of set of tribbles, insert a set with a newly added tribble
+getTribbles 1+n/5
+getTribblesBySubscription: 1 + |subscribees| + 100 index lookups + 100 lookups
+
+OPTION 4 : Store your index with the subscribees so that when you get subscribees you can find the sets of tribbles
+postTribble: 3 lookup of user, find the most recent index, fetch set at the index, store set at the index
+getTribbles: 1 +n/5
+getTribblesBySubscription: 1 + |subscribees| + n/5 lookups
+
+jbu_user_+<user> -> { curSet#, listOfSubscribeTos }
+jbuset#_user -> [] of tribbles
