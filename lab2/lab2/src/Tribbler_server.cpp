@@ -70,12 +70,12 @@ class TribblerHandler : virtual public TribblerIf {
     // user does not exist, so create the json and put it
     Json::Value root;
     root[CUR_SET_NUM] = 0;
-    root[LIST_OF_SUBSCRIBERS] = Json::nullValue; 
+    root[LIST_OF_SUBSCRIBERS] = Json::Value(Json::arrayValue); 
     
     Json::StyledWriter writer;
     string value = writer.write(root);
 
-    string key = string("jbu_user_").append(userid);
+    string key = string(USER_PREFIX).append(userid);
 
     // put the json
     KVStoreStatus::type put_ret_val = Put(key, value);
@@ -96,8 +96,7 @@ class TribblerHandler : virtual public TribblerIf {
     // get the user info, parse the json, add the subscription, put the json
 
     KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
-    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND ||
-       get_ret_val.status == KVStoreStatus::EITEMNOTFOUND) 
+    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
         return TribbleStatus::STORE_FAILED;
     }
@@ -111,14 +110,14 @@ class TribblerHandler : virtual public TribblerIf {
     Json::Value user_info;
     Json::Reader reader;
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
-    if(parse_ret_value)
+    if(parse_ret_value == false)
     {
         return TribbleStatus::FAILED; // for lack of a better enum
     }
-    const Json::Value list_of_subscribers = user_info["listOfSubscribers"];
+    const Json::Value list_of_subscribers = user_info[LIST_OF_SUBSCRIBERS];
     Json::Value list_of_subscribers_copy = list_of_subscribers;
     Json::Value new_list_of_subscribe_tos = list_of_subscribers_copy.append(subscribeto);
-    user_info["listOfSubscribers"] = new_list_of_subscribe_tos;
+    user_info[LIST_OF_SUBSCRIBERS] = new_list_of_subscribe_tos;
 
     Json::StyledWriter writer;
     string value = writer.write(user_info);
@@ -127,7 +126,7 @@ class TribblerHandler : virtual public TribblerIf {
     KVStoreStatus::type put_ret_val = Put(string(USER_PREFIX).append(userid), value);
     if(put_ret_val != KVStoreStatus::OK)
     {
-        return TribbleStatus::FAILED;
+        return TribbleStatus::STORE_FAILED;
     } 
 
     return TribbleStatus::OK;
@@ -150,7 +149,7 @@ class TribblerHandler : virtual public TribblerIf {
     Json::Value user_info;
     Json::Reader reader;
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
-    if(parse_ret_value)
+    if(parse_ret_value == false)
     {
         return TribbleStatus::FAILED;
     }
@@ -208,7 +207,7 @@ class TribblerHandler : virtual public TribblerIf {
     Json::Value user_info;
     Json::Reader reader;
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
-    if(parse_ret_value)
+    if(parse_ret_value == false)
     {
         return TribbleStatus::FAILED; 
     }
@@ -234,7 +233,7 @@ class TribblerHandler : virtual public TribblerIf {
     {
         Json::Reader reader;
         bool parse_ret_value = reader.parse(get_set_ret_val.value, tribble_set);
-        if(parse_ret_value)
+        if(parse_ret_value == false)
         {
             return TribbleStatus::FAILED; // for lack of a better enum
         }
@@ -285,7 +284,7 @@ class TribblerHandler : virtual public TribblerIf {
     Json::Reader reader;
     Json::Value user_info;
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
-    if(parse_ret_value)
+    if(parse_ret_value == false)
     {
         _return.status = TribbleStatus::FAILED; 
         return;
@@ -309,7 +308,7 @@ class TribblerHandler : virtual public TribblerIf {
         Json::Reader reader;
         Json::Value tribble_set;
         bool parse_ret_value = reader.parse(get_ret_val.value, tribble_set);
-        if(parse_ret_value)
+        if(parse_ret_value == false)
         {
             _return.status = TribbleStatus::FAILED; 
             // unclear if I should clear the list at this point
@@ -351,7 +350,7 @@ class TribblerHandler : virtual public TribblerIf {
     Json::Reader reader;
     Json::Value user_info;
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
-    if(parse_ret_value)
+    if(parse_ret_value == false)
     {
         _return.status = TribbleStatus::FAILED; 
         return;
