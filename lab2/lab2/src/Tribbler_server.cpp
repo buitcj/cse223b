@@ -131,7 +131,54 @@ class TribblerHandler : virtual public TribblerIf {
   TribbleStatus::type RemoveSubscription(const std::string& userid, const std::string& subscribeto) {
     // Your implementation goes here
     printf("RemoveSubscription\n");
-    return TribbleStatus::NOT_IMPLEMENTED;
+
+    // get user info for userid, look thru his subscribers and if subscsribeto is found, then remove it and put
+
+    // get user info
+    KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
+    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND ||
+       get_ret_val.status == KVStoreStatus::EITEMNOTFOUND) // NOT SURE WE NEED THIS*************************************** 
+    {
+        return TribbleStatus::INVALID_USER;
+    }
+
+    
+    // find the subscriber in question
+    // TODO: IMPLEMENT THIS***************************
+    Json::Value user_info;
+    Json::Reader reader;
+    bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
+    if(parse_ret_value)
+    {
+        return TribbleStatus::NOT_IMPLEMENTED; //***************   
+    }
+    const Json::Value list_of_subscribers = user_info["listOfSubscribers"];
+    
+    Json::Value new_list_of_subscribers;
+    bool changed = false;
+    // populate new list
+
+    // if subscribeto wasn't found then return error
+    if(!changed)
+    {
+       return TribbleStatus::INVALID_SUBSCRIBETO; 
+    }
+
+    // if subscribe to was found, then put the new user info
+    user_info["listOfSubscribers"] = new_list_of_subscribers;
+
+    // write the new json
+    Json::StyledWriter writer;
+    string value = writer.write(user_info);
+    
+    // put the new json
+    KVStoreStatus::type put_ret_val = Put(string(USER_PREFIX).append(userid), value);
+    if(put_ret_val != KVStoreStatus::OK)
+    {
+        return TribbleStatus::NOT_IMPLEMENTED; //*************
+    } 
+
+    return TribbleStatus::OK;
   }
 
   TribbleStatus::type PostTribble(const std::string& userid, const std::string& tribbleContents) {
