@@ -492,6 +492,7 @@ class TribblerHandler : virtual public TribblerIf {
             }
             th.idx = tribble_set.size() - 1;
             th.tribble_set = tribble_set;
+            th.ts = tribble_set[th.idx][TIMESTAMP].asUInt64();
 
             addTribbleHelper(ths, th);
             cout << "GetTribblesBySubscription pt 3.2, added th" << endl;
