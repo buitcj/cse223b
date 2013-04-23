@@ -42,6 +42,8 @@ class TribblerHandler : virtual public TribblerIf {
   string CUR_SET_NUM;
   string LIST_OF_SUBSCRIBERS;
 
+  int MAX_MSGS;
+
   TribblerHandler(std::string storageServer, int storageServerPort) {
     // Your initialization goes here
     USER_PREFIX = "jbu_user_";
@@ -51,6 +53,7 @@ class TribblerHandler : virtual public TribblerIf {
     MSG = "msg";
     CUR_SET_NUM = "curSetNum";
     LIST_OF_SUBSCRIBERS = "listOfSubscribers";
+    MAX_MSGS = 100;
     _storageServer = storageServer;
     _storageServerPort = storageServerPort;
   }
@@ -61,7 +64,7 @@ class TribblerHandler : virtual public TribblerIf {
     // determine if user exists, if not create the json, put the json
 
     // determine if user already exists
-    KeyValueStore::GetResponse get_ret_val = Get(userid);
+    KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
     if(get_ret_val.status == KVStoreStatus::OK || get_ret_val.value.length() != 0)
     {
        return TribbleStatus::EEXISTS; 
@@ -86,6 +89,7 @@ class TribblerHandler : virtual public TribblerIf {
     }
     else
     {
+        cout << "CreateUser couldn't store the key/val" << endl;
        return TribbleStatus::STORE_FAILED; 
     }
   }
@@ -95,15 +99,23 @@ class TribblerHandler : virtual public TribblerIf {
 
     // get the user info, parse the json, add the subscription, put the json
 
-    KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
-    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    if(userid.compare(subscribeto) == 0) 
     {
-        return TribbleStatus::STORE_FAILED;
+        cout << "AddSubscription same user/subscribeto" << endl;
+        return TribbleStatus::INVALID_SUBSCRIBETO;
+    }
+
+    KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
+    if(userid.length() == 0 || get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    {
+        cout << "AddSubscription user doesn't exist" << endl;
+        return TribbleStatus::INVALID_USER;
     }
 
     KeyValueStore::GetResponse get_subscribe_ret_val = Get(string(USER_PREFIX).append(subscribeto)); 
-    if(get_subscribe_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    if(subscribeto.length() == 0 || get_subscribe_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
+        cout << "AddSubscription subscribeto doesn't exist" << endl;
         return TribbleStatus::INVALID_SUBSCRIBETO;
     }
 
@@ -112,12 +124,31 @@ class TribblerHandler : virtual public TribblerIf {
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
     if(parse_ret_value == false)
     {
+        cout << "AddSubscription parsing failed" << endl;
         return TribbleStatus::FAILED; // for lack of a better enum
     }
     const Json::Value list_of_subscribers = user_info[LIST_OF_SUBSCRIBERS];
     Json::Value list_of_subscribers_copy = list_of_subscribers;
-    Json::Value new_list_of_subscribe_tos = list_of_subscribers_copy.append(subscribeto);
-    user_info[LIST_OF_SUBSCRIBERS] = new_list_of_subscribe_tos;
+    
+    bool found = false;
+    for(int i = 0; i < list_of_subscribers_copy.size(); i++)
+    {
+        string subscriber = list_of_subscribers_copy[i].asString();
+        if(subscriber.compare(subscribeto) == 0)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    if(found == true)
+    {
+        cout << "AddSubscription failed to add a duplicate subscribeto" << endl;
+        return TribbleStatus::EEXISTS;
+    }
+
+    list_of_subscribers_copy.append(subscribeto);
+    user_info[LIST_OF_SUBSCRIBERS] = list_of_subscribers_copy;
 
     Json::StyledWriter writer;
     string value = writer.write(user_info);
@@ -126,6 +157,7 @@ class TribblerHandler : virtual public TribblerIf {
     KVStoreStatus::type put_ret_val = Put(string(USER_PREFIX).append(userid), value);
     if(put_ret_val != KVStoreStatus::OK)
     {
+        cout << "AddSubscription put the json failed" << endl;
         return TribbleStatus::STORE_FAILED;
     } 
 
@@ -141,6 +173,7 @@ class TribblerHandler : virtual public TribblerIf {
     KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
     if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
+        cout << "RemoveSubscription user not found" << endl;
         return TribbleStatus::INVALID_USER;
     }
 
@@ -151,11 +184,12 @@ class TribblerHandler : virtual public TribblerIf {
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
     if(parse_ret_value == false)
     {
+        cout << "RemoveSubscription parsing failed" << endl;
         return TribbleStatus::FAILED;
     }
 
     const Json::Value list_of_subscribers = user_info["listOfSubscribers"];
-    Json::Value new_list_of_subscribers;
+    Json::Value new_list_of_subscribers = Json::Value(Json::arrayValue);
     bool found = false;
     for(unsigned int i = 0; i < list_of_subscribers.size(); i++)
     {
@@ -164,7 +198,10 @@ class TribblerHandler : virtual public TribblerIf {
         {
             found = true;
         }
-        new_list_of_subscribers.append(subscriber);
+        else
+        {
+            new_list_of_subscribers.append(subscriber);
+        }
     }
     
     // if subscribe to was found, then put the new user info
@@ -174,6 +211,7 @@ class TribblerHandler : virtual public TribblerIf {
     }
     else
     {
+        cout << "RemoveSubscription subscribeto not found" << endl;
         return TribbleStatus::INVALID_SUBSCRIBETO;
     }
 
@@ -185,6 +223,7 @@ class TribblerHandler : virtual public TribblerIf {
     KVStoreStatus::type put_ret_val = Put(string(USER_PREFIX).append(userid), value);
     if(put_ret_val != KVStoreStatus::OK)
     {
+        cout << "RemoveSubscription put json failed" << endl;
         return TribbleStatus::STORE_FAILED;
     } 
 
@@ -200,6 +239,7 @@ class TribblerHandler : virtual public TribblerIf {
     KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
     if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
+        cout << "PostTribble user doesn't exist" << endl;
         return TribbleStatus::INVALID_USER;
     }
 
@@ -209,6 +249,7 @@ class TribblerHandler : virtual public TribblerIf {
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
     if(parse_ret_value == false)
     {
+        cout << "PostTribble parsing failed" << endl;
         return TribbleStatus::FAILED; 
     }
     const Json::Value cur_set_num_val = user_info[CUR_SET_NUM];
@@ -224,7 +265,7 @@ class TribblerHandler : virtual public TribblerIf {
     sprintf(buf, "%d", cur_set_num);
     KeyValueStore::GetResponse get_set_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(userid));
     Json::Value tribble_set;
-    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    if(get_set_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
         // if a key was not found, it could be because we're starting a new set
         tribble_set.append(tribble);
@@ -261,6 +302,7 @@ class TribblerHandler : virtual public TribblerIf {
     KVStoreStatus::type put_set_ret_val = Put(string(SET_PREFIX).append(buf).append("_").append(userid), value);
     if(put_set_ret_val != KVStoreStatus::OK)
     {
+        cout << "PostTribble put set failed" << endl;
         return TribbleStatus::STORE_FAILED;
     }
 
@@ -276,6 +318,7 @@ class TribblerHandler : virtual public TribblerIf {
     KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
     if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
+        cout << "GetTribbles user not found" << endl;
         _return.status = TribbleStatus::INVALID_USER;
         return;
     }
@@ -286,6 +329,7 @@ class TribblerHandler : virtual public TribblerIf {
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
     if(parse_ret_value == false)
     {
+        cout << "GetTribbles parsing failed" << endl;
         _return.status = TribbleStatus::FAILED; 
         return;
     }
@@ -293,36 +337,37 @@ class TribblerHandler : virtual public TribblerIf {
     const Json::Value cur_set_num_val = user_info[CUR_SET_NUM];
     int cur_set_num = cur_set_num_val.asInt();
     
-    for(int i = cur_set_num; i >= 0; i--)
+    int count = 0;
+    for(int i = cur_set_num; i >= 0 && count < MAX_MSGS; i--)
     {
         char buf[10];
         sprintf(buf, "%d", i);
         KeyValueStore::GetResponse get_set_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(userid));
-        if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+        if(get_set_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
         {
-            _return.status = TribbleStatus::FAILED;
-            // unclear if I should clear the list at this point
-            return;
+            // user has no tribble posts yet so he won't have a set
+            continue;
         }
-    
+
         Json::Reader reader;
         Json::Value tribble_set;
-        bool parse_ret_value = reader.parse(get_ret_val.value, tribble_set);
+        bool parse_ret_value = reader.parse(get_set_ret_val.value, tribble_set);
         if(parse_ret_value == false)
         {
+            cout << "GetTribbles parsing part 2 failed" << endl;
             _return.status = TribbleStatus::FAILED; 
-            // unclear if I should clear the list at this point
             return;
         }
 
         // put every tribble in the set into the list
-        for(unsigned int j = tribble_set.size(); j >= 0; j--)
+        for(unsigned int j = 0; j < tribble_set.size() && count < MAX_MSGS; j++)
         {
             Tribble t;
-            t.posted = tribble_set[i][TIMESTAMP].asUInt64();
-            t.contents = tribble_set[i][MSG].asString();
+            t.posted = tribble_set[tribble_set.size() - j - 1][TIMESTAMP].asUInt64();
+            t.contents = tribble_set[tribble_set.size() - j - 1][MSG].asString();
             t.userid = userid;
             _return.tribbles.push_back(t);
+            count++;
         }
     }
     _return.status = TribbleStatus::OK;
@@ -342,9 +387,12 @@ class TribblerHandler : virtual public TribblerIf {
     KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
     if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
+        cout << "GetSubscriptions user not found" << endl;
         _return.status = TribbleStatus::INVALID_USER;
         return;
     }
+    
+    cout << "GetSubscriptions GET returned: " << get_ret_val.status << endl;
 
     // user was found, so let's just take the subscribeTo list out of the object
     Json::Reader reader;
@@ -352,12 +400,14 @@ class TribblerHandler : virtual public TribblerIf {
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
     if(parse_ret_value == false)
     {
+        cout << "GetSubscriptions parsing failed" << endl;
         _return.status = TribbleStatus::FAILED; 
         return;
     }
-    
+
     Json::Value subscribeToList = user_info[LIST_OF_SUBSCRIBERS];
-    if(subscribeToList == Json::nullValue)
+
+    if(subscribeToList.size() == 0)
     {
         // empty, so put nothing in the return value
         _return.subscriptions.clear();
@@ -416,6 +466,7 @@ class TribblerHandler : virtual public TribblerIf {
 
   KVStoreStatus::type Put(std::string key, std::string value) {
     // Making the RPC Call to the Storage server
+    cout << "PUT key: " << key << " value: " << value << endl;
     boost::shared_ptr<TSocket> socket(new TSocket(_storageServer, _storageServerPort));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -428,6 +479,7 @@ class TribblerHandler : virtual public TribblerIf {
   }
 
   KeyValueStore::GetResponse Get(std::string key) {
+    cout << "GET key: " << key << endl;
     KeyValueStore::GetResponse response;
     // Making the RPC Call to the Storage server
     boost::shared_ptr<TSocket> socket(new TSocket(_storageServer, _storageServerPort));
@@ -437,6 +489,7 @@ class TribblerHandler : virtual public TribblerIf {
     transport->open();
     client.Get(response, key);
     transport->close();
+    cout << "GET status was: " << response.status << endl;
     return response;
   }
 
