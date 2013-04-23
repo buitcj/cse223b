@@ -3,6 +3,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <iostream>
 #include "Tribbler.h"
@@ -30,17 +31,18 @@ using namespace KeyValueStore;
 class TribblerHandler : virtual public TribblerIf {
  public:
     
-  const string USER_PREFIX = "jbu_user_";
-  const string SET_PREFIX = "jbu_set_";
+  string USER_PREFIX;
+  string SET_PREFIX;
 
   TribblerHandler(std::string storageServer, int storageServerPort) {
     // Your initialization goes here
+    USER_PREFIX = "jbu_user_";
+    SET_PREFIX = "jbu_set_";
     _storageServer = storageServer;
     _storageServerPort = storageServerPort;
   }
 
   TribbleStatus::type CreateUser(const std::string& userid) {
-    // Your implementation goes here
     printf("CreateUser\n");
 
     // determine if user exists, if not create the json, put the json
@@ -71,34 +73,24 @@ class TribblerHandler : virtual public TribblerIf {
     }
     else
     {
-       return TribbleStatus::NOT_IMPLEMENTED; 
+       return TribbleStatus::STORE_FAILED; 
     }
-
-    /*
-    KVStoreStatus::type Put(std::string key, std::string value) {
-    KeyValueStore::GetResponse Get(std::string key)
-    GetListResponse glr = GetList(key); 
-    if(glr.status != KVStoreStatus::OK)
-        KVStoreStatus::type kvss = AddToList(key, userid);
-    */
   }
 
   TribbleStatus::type AddSubscription(const std::string& userid, const std::string& subscribeto) {
-    // Your implementation goes here
     printf("AddSubscription\n");
 
     // get the user info, parse the json, add the subscription, put the json
 
     KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
     if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND ||
-       get_ret_val.status == KVStoreStatus::EITEMNOTFOUND) // NOT SURE WE NEED THIS*************************************** 
+       get_ret_val.status == KVStoreStatus::EITEMNOTFOUND) 
     {
-        return TribbleStatus::INVALID_USER;
+        return TribbleStatus::STORE_FAILED;
     }
 
     KeyValueStore::GetResponse get_subscribe_ret_val = Get(string(USER_PREFIX).append(subscribeto)); 
-    if(get_subscribe_ret_val.status == KVStoreStatus::EKEYNOTFOUND ||
-       get_subscribe_ret_val.status == KVStoreStatus::EITEMNOTFOUND) // NOT SURE WE NEED THIS*************************************** 
+    if(get_subscribe_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
         return TribbleStatus::INVALID_SUBSCRIBETO;
     }
@@ -108,7 +100,7 @@ class TribblerHandler : virtual public TribblerIf {
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
     if(parse_ret_value)
     {
-        return TribbleStatus::NOT_IMPLEMENTED; //***************   
+        return TribbleStatus::STORE_FAILED; // for lack of a better enum
     }
     const Json::Value list_of_subscribers = user_info["listOfSubscribers"];
     Json::Value list_of_subscribers_copy = list_of_subscribers;
@@ -122,50 +114,56 @@ class TribblerHandler : virtual public TribblerIf {
     KVStoreStatus::type put_ret_val = Put(string(USER_PREFIX).append(userid), value);
     if(put_ret_val != KVStoreStatus::OK)
     {
-        return TribbleStatus::NOT_IMPLEMENTED; //*************
+        return TribbleStatus::FAILED;
     } 
 
     return TribbleStatus::OK;
   }
 
   TribbleStatus::type RemoveSubscription(const std::string& userid, const std::string& subscribeto) {
-    // Your implementation goes here
     printf("RemoveSubscription\n");
 
     // get user info for userid, look thru his subscribers and if subscsribeto is found, then remove it and put
 
     // get user info
     KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
-    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND ||
-       get_ret_val.status == KVStoreStatus::EITEMNOTFOUND) // NOT SURE WE NEED THIS*************************************** 
+    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
         return TribbleStatus::INVALID_USER;
     }
 
     
     // find the subscriber in question
-    // TODO: IMPLEMENT THIS***************************
     Json::Value user_info;
     Json::Reader reader;
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
     if(parse_ret_value)
     {
-        return TribbleStatus::NOT_IMPLEMENTED; //***************   
+        return TribbleStatus::FAILED;
     }
+
     const Json::Value list_of_subscribers = user_info["listOfSubscribers"];
-    
     Json::Value new_list_of_subscribers;
-    bool changed = false;
-    // populate new list
-
-    // if subscribeto wasn't found then return error
-    if(!changed)
+    bool found = false;
+    for(unsigned int i = 0; i < list_of_subscribers.size(); i++)
     {
-       return TribbleStatus::INVALID_SUBSCRIBETO; 
+        const string& subscriber = list_of_subscribers[i].asString();
+        if(subscriber.compare(subscribeto) == 0)
+        {
+            found = true;
+        }
+        new_list_of_subscribers.append(subscriber);
     }
-
+    
     // if subscribe to was found, then put the new user info
-    user_info["listOfSubscribers"] = new_list_of_subscribers;
+    if(found == true)
+    {
+        user_info["listOfSubscribers"] = new_list_of_subscribers;
+    }
+    else
+    {
+        return TribbleStatus::INVALID_SUBSCRIBETO;
+    }
 
     // write the new json
     Json::StyledWriter writer;
@@ -175,15 +173,44 @@ class TribblerHandler : virtual public TribblerIf {
     KVStoreStatus::type put_ret_val = Put(string(USER_PREFIX).append(userid), value);
     if(put_ret_val != KVStoreStatus::OK)
     {
-        return TribbleStatus::NOT_IMPLEMENTED; //*************
+        return TribbleStatus::STORE_FAILED;
     } 
 
     return TribbleStatus::OK;
   }
 
   TribbleStatus::type PostTribble(const std::string& userid, const std::string& tribbleContents) {
-    // Your implementation goes here
     printf("PostTribble\n");
+
+    // get user id, check if it exists, find the cur set number, retrieve the current set, add the tribble, store the set, if the set is larger than the max set size, update the cur set number
+
+    // get user info
+    KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
+    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    {
+        return TribbleStatus::INVALID_USER;
+    }
+
+    // get the current set number
+    Json::Value user_info;
+    Json::Reader reader;
+    bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
+    if(parse_ret_value)
+    {
+        return TribbleStatus::FAILED; 
+    }
+    const Json::Value cur_set_num_val = user_info["curSetNum"];
+    int cur_set_num = cur_set_num_val.asInt();
+
+    // retrieve the current set
+    char buf[10];
+    sprintf(buf, "%d", cur_set_num);
+    KeyValueStore::GetResponse get_set_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(userid));
+    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    {
+        return TribbleStatus::INVALID_USER;
+    }
+
     return TribbleStatus::NOT_IMPLEMENTED;
   }
 
