@@ -14,6 +14,8 @@
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <list>
+#include <cctype>
 
 #define JSON_IS_AMALGAMATION
 #include <json/json.h>
@@ -28,6 +30,15 @@ using boost::shared_ptr;
 using namespace std;
 using namespace Tribbler;
 using namespace KeyValueStore;
+
+struct TribbleHelper
+{
+    Json::Value tribble_set;
+    string userid;
+    uint64_t ts;
+    int set;
+    int idx;
+};
 
 class TribblerHandler : virtual public TribblerIf {
  public:
@@ -44,6 +55,29 @@ class TribblerHandler : virtual public TribblerIf {
 
   int MAX_MSGS;
 
+  bool compare(const TribbleHelper& lhs, const TribbleHelper& rhs)
+  {
+      return (lhs.tribble_set[lhs.idx][TIMESTAMP].asUInt64() < rhs.tribble_set[rhs.idx][TIMESTAMP].asUInt64());
+  }
+
+  void addTribbleHelper(list<TribbleHelper>& ths, TribbleHelper& th)
+  {
+    list<TribbleHelper>::iterator iter = ths.begin();
+    while(iter != ths.end() && iter->ts < th.ts)
+    {
+        iter++;
+    }    
+    ths.insert(iter, th);
+    
+    list<TribbleHelper>::iterator  it = ths.begin();
+    while(it != ths.end())
+    {
+        cout << "\t" << it->ts << endl;
+        it++;
+    }
+    cout << "---" << endl;
+  }
+
   TribblerHandler(std::string storageServer, int storageServerPort) {
     // Your initialization goes here
     USER_PREFIX = "jbu_user_";
@@ -53,7 +87,7 @@ class TribblerHandler : virtual public TribblerIf {
     MSG = "msg";
     CUR_SET_NUM = "curSetNum";
     LIST_OF_SUBSCRIBERS = "listOfSubscribers";
-    MAX_MSGS = 100;
+    MAX_MSGS = 10;
     _storageServer = storageServer;
     _storageServerPort = storageServerPort;
   }
@@ -131,7 +165,7 @@ class TribblerHandler : virtual public TribblerIf {
     Json::Value list_of_subscribers_copy = list_of_subscribers;
     
     bool found = false;
-    for(int i = 0; i < list_of_subscribers_copy.size(); i++)
+    for(unsigned int i = 0; i < list_of_subscribers_copy.size(); i++)
     {
         string subscriber = list_of_subscribers_copy[i].asString();
         if(subscriber.compare(subscribeto) == 0)
@@ -374,9 +408,162 @@ class TribblerHandler : virtual public TribblerIf {
   }
 
   void GetTribblesBySubscription(TribbleResponse& _return, const std::string& userid) {
-    // Your implementation goes here
-    _return.status = TribbleStatus::NOT_IMPLEMENTED;
     printf("GetTribblesBySubscription\n");
+
+    _return.tribbles.clear();
+
+    // get user, if it doesnt exist return, if it does exist, get the subscriptions, for each subcribeTo
+
+    // get the user info
+    KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
+    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    {
+        cout << "GetSubscriptions user not found" << endl;
+        _return.status = TribbleStatus::INVALID_USER;
+        return;
+    }
+    
+    // user was found, so let's just take the subscribeTo list out of the object
+    Json::Reader reader;
+    Json::Value user_info;
+    bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
+    if(parse_ret_value == false)
+    {
+        cout << "GetSubscriptions parsing failed" << endl;
+        _return.status = TribbleStatus::FAILED; 
+        return;
+    }
+
+    Json::Value subscribeToList = user_info[LIST_OF_SUBSCRIBERS];
+
+    cout << "GetTribblesBySubscription pt 1 size subcribeTo list : " << subscribeToList.size() << endl;
+
+    if(subscribeToList.size() == 0)
+    {
+        // empty, so put nothing in the return value
+        cout << "GetTribblesBySubscription pt 1.1, subscribeToList.size() was 0" << endl;
+        _return.tribbles.clear();
+        _return.status = TribbleStatus::OK;
+    }
+    else
+    {
+        list<TribbleHelper> ths;
+        for(unsigned int i = 0; i < subscribeToList.size(); i++)
+        {
+            cout << "GetTribblesBySubscription pt 1.2, inside for loop" << endl;
+            // get all the information to create a lhs 
+            TribbleHelper th;
+            th.userid = subscribeToList[i].asString();
+
+            // get the user info
+            KeyValueStore::GetResponse get_sub_ret_val = Get(string(USER_PREFIX).append(th.userid));
+            if(get_sub_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+            {
+                cout << "GetTribblesBySubscription pt 2 couldnt find subscribeto " << subscribeToList.size() << endl;
+                _return.status = TribbleStatus::INVALID_SUBSCRIBETO;
+            }
+            
+            Json::Reader reader;
+            Json::Value subscribeto_user_info;
+            bool parse_ret_value = reader.parse(get_sub_ret_val.value, subscribeto_user_info);
+            if(parse_ret_value == false)
+            {
+                cout << "GetTribblesBySubscription pt 3 couldnt parse" << subscribeToList.size() << endl;
+                continue;
+            }
+
+            const Json::Value cur_set_num_val = subscribeto_user_info[CUR_SET_NUM];
+            int cur_set_num = cur_set_num_val.asInt();
+            
+            // get the current set
+            th.set = cur_set_num;
+
+            // get the current index by getting the set and then examining and store the tribble_set
+            char buf[10];
+            sprintf(buf, "%d", th.set);
+            KeyValueStore::GetResponse get_set_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(th.userid));
+
+            Json::Value tribble_set;
+            parse_ret_value = reader.parse(get_set_ret_val.value, tribble_set);
+            if(parse_ret_value == false)
+            {
+                cout << "GetTribblesBySubscription pt 3.1 couldnt parse: " << get_set_ret_val.value << endl;
+                continue; // subscribeto hasn't pospted anything yet
+            }
+            th.idx = tribble_set.size() - 1;
+            th.tribble_set = tribble_set;
+
+            addTribbleHelper(ths, th);
+            cout << "GetTribblesBySubscription pt 3.2, added th" << endl;
+        }
+                
+        cout << "GetTribblesBySubscription pt 4" << endl;
+        cout << "ths.size(): " << ths.size() << endl;
+
+        // until the return vector's size is 100 or there is nothing else in the list
+            // for the smallest one, create its tribbler and add it to the list
+        while(_return.tribbles.size() < 100 && ths.size() > 0)
+        {
+            cout << "GetTribblesBySubscription pt 4.1 inside while" << subscribeToList.size() << endl;
+
+            Tribble t; 
+            t.posted = ths.front().ts;
+            t.userid = ths.front().userid;
+            t.contents = ths.front().tribble_set[ths.front().idx][MSG].asString();
+            ths.front().idx = ths.front().idx - 1;
+            _return.tribbles.push_back(t);
+
+            // make sure tribble helper stays consistent
+            TribbleHelper front = ths.front();
+            ths.pop_front();
+
+            if(front.idx < 0)
+            {
+                if(front.set == 0) 
+                {
+                    // done with this set
+                    continue;
+                }
+                else
+                {
+                    front.set = front.set - 1;
+                    front.idx = MAX_SET_SIZE - 1;
+                    // now get the new set
+
+                    // retrieve the current set
+                    char buf[10];
+                    sprintf(buf, "%d", front.set);
+                    KeyValueStore::GetResponse get_newset_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(front.userid));
+                    if(get_newset_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+                    {
+                        cout << "***Could not find set, should never happen" << endl;
+                    }
+
+                    Json::Reader reader;
+                    Json::Value tribble_set;
+                    bool parse_newset_ret_value = reader.parse(get_newset_ret_val.value, tribble_set);
+                    if(parse_newset_ret_value == false)
+                    {
+                        cout << "GetTribblesBySubscription pt 5 couldnt parse" << subscribeToList.size() << endl;
+                        continue; // WHAT DO???
+                    }
+                    
+                    front.tribble_set = tribble_set;
+                }
+            }
+
+            // ensure that the timestamp is updated to the new 
+            front.ts = front.tribble_set[front.idx][TIMESTAMP].asUInt64();
+
+            addTribbleHelper(ths, front); // since th has new timestamp, we need to insert it back in sorted order
+
+            // done with consistency check
+        }
+
+        cout << "GetTribblesBySubscription pt 6" << endl;
+        cout << "GetTribblesBySubscription return tribbles size: " << _return.tribbles.size() << endl;
+        _return.status = TribbleStatus::OK;
+    }
   }
 
   void GetSubscriptions(SubscriptionResponse& _return, const std::string& userid) {
