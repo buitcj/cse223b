@@ -18,6 +18,23 @@ struct TribbleStatus {
   };
 };
 
+Tribble ================================
+std::string userid;
+int64_t posted;
+std::string contents;
+
+GetResponse =============================
+value
+status
+
+SubscriptionResponse =====================
+std::vector<std::string>  subscriptions;
+TribbleStatus::type status;
+
+TribbleResponse ==========================
+std::vector<Tribble>  tribbles;
+TribbleStatus::type status;
+
 addSubscription
 removeSubscription
 postTribble // of one user

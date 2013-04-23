@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <time.h>
 #include <iostream>
 #include "Tribbler.h"
 #include "KeyValueStore.h"
@@ -33,11 +34,23 @@ class TribblerHandler : virtual public TribblerIf {
     
   string USER_PREFIX;
   string SET_PREFIX;
+  unsigned int MAX_SET_SIZE;
+
+  string TIMESTAMP;
+  string MSG;
+
+  string CUR_SET_NUM;
+  string LIST_OF_SUBSCRIBERS;
 
   TribblerHandler(std::string storageServer, int storageServerPort) {
     // Your initialization goes here
     USER_PREFIX = "jbu_user_";
     SET_PREFIX = "jbu_set_";
+    MAX_SET_SIZE = 5;
+    TIMESTAMP = "timestamp";
+    MSG = "msg";
+    CUR_SET_NUM = "curSetNum";
+    LIST_OF_SUBSCRIBERS = "listOfSubscribers";
     _storageServer = storageServer;
     _storageServerPort = storageServerPort;
   }
@@ -56,8 +69,8 @@ class TribblerHandler : virtual public TribblerIf {
 
     // user does not exist, so create the json and put it
     Json::Value root;
-    root["curSetNum"] = 0;
-    root["listOfSubscribers"] = Json::nullValue; 
+    root[CUR_SET_NUM] = 0;
+    root[LIST_OF_SUBSCRIBERS] = Json::nullValue; 
     
     Json::StyledWriter writer;
     string value = writer.write(root);
@@ -100,7 +113,7 @@ class TribblerHandler : virtual public TribblerIf {
     bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
     if(parse_ret_value)
     {
-        return TribbleStatus::STORE_FAILED; // for lack of a better enum
+        return TribbleStatus::FAILED; // for lack of a better enum
     }
     const Json::Value list_of_subscribers = user_info["listOfSubscribers"];
     Json::Value list_of_subscribers_copy = list_of_subscribers;
@@ -199,25 +212,121 @@ class TribblerHandler : virtual public TribblerIf {
     {
         return TribbleStatus::FAILED; 
     }
-    const Json::Value cur_set_num_val = user_info["curSetNum"];
+    const Json::Value cur_set_num_val = user_info[CUR_SET_NUM];
     int cur_set_num = cur_set_num_val.asInt();
+
+    // set up the tribble
+    Json::Value tribble;
+    tribble[TIMESTAMP] = Json::Value((Json::UInt64) time(NULL));
+    tribble[MSG] = tribbleContents;
 
     // retrieve the current set
     char buf[10];
     sprintf(buf, "%d", cur_set_num);
     KeyValueStore::GetResponse get_set_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(userid));
+    Json::Value tribble_set;
     if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
     {
-        return TribbleStatus::INVALID_USER;
+        // if a key was not found, it could be because we're starting a new set
+        tribble_set.append(tribble);
+    }
+    else
+    {
+        Json::Reader reader;
+        bool parse_ret_value = reader.parse(get_set_ret_val.value, tribble_set);
+        if(parse_ret_value)
+        {
+            return TribbleStatus::FAILED; // for lack of a better enum
+        }
+
+        // figure out where to put the tribble
+        tribble_set.append(tribble);
+
+        // if the tribble set is maxed out, we need to update the user's set num
+        if(tribble_set.size() == MAX_SET_SIZE)
+        {
+            user_info[CUR_SET_NUM] = cur_set_num + 1;
+
+            Json::StyledWriter writer;
+            string value = writer.write(user_info);
+            KVStoreStatus::type put_ret_val = Put(string(USER_PREFIX).append(userid), value);
+            if(put_ret_val != KVStoreStatus::OK)
+            {
+                // do nothing for now 
+            }
+        }
     }
 
-    return TribbleStatus::NOT_IMPLEMENTED;
+    Json::StyledWriter writer;
+    string value = writer.write(tribble_set);
+    KVStoreStatus::type put_set_ret_val = Put(string(SET_PREFIX).append(buf).append("_").append(userid), value);
+    if(put_set_ret_val != KVStoreStatus::OK)
+    {
+        return TribbleStatus::STORE_FAILED;
+    }
+
+    return TribbleStatus::OK;
   }
 
   void GetTribbles(TribbleResponse& _return, const std::string& userid) {
-    // Your implementation goes here
-    _return.status = TribbleStatus::NOT_IMPLEMENTED;
     printf("GetTribbles\n");
+
+    // get the user, if it doesn't exist, then return error, if it does exist then get the curSetNumber and work backwards down to 0
+    
+    // get the user info
+    KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
+    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    {
+        _return.status = TribbleStatus::INVALID_USER;
+        return;
+    }
+
+    // get the curSetNumber and work backwards to return the tribbles
+    Json::Reader reader;
+    Json::Value user_info;
+    bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
+    if(parse_ret_value)
+    {
+        _return.status = TribbleStatus::FAILED; 
+        return;
+    }
+
+    const Json::Value cur_set_num_val = user_info[CUR_SET_NUM];
+    int cur_set_num = cur_set_num_val.asInt();
+    
+    for(int i = cur_set_num; i >= 0; i--)
+    {
+        char buf[10];
+        sprintf(buf, "%d", i);
+        KeyValueStore::GetResponse get_set_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(userid));
+        if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+        {
+            _return.status = TribbleStatus::FAILED;
+            // unclear if I should clear the list at this point
+            return;
+        }
+    
+        Json::Reader reader;
+        Json::Value tribble_set;
+        bool parse_ret_value = reader.parse(get_ret_val.value, tribble_set);
+        if(parse_ret_value)
+        {
+            _return.status = TribbleStatus::FAILED; 
+            // unclear if I should clear the list at this point
+            return;
+        }
+
+        // put every tribble in the set into the list
+        for(unsigned int j = tribble_set.size(); j >= 0; j--)
+        {
+            Tribble t;
+            t.posted = tribble_set[i][TIMESTAMP].asUInt64();
+            t.contents = tribble_set[i][MSG].asString();
+            t.userid = userid;
+            _return.tribbles.push_back(t);
+        }
+    }
+    _return.status = TribbleStatus::OK;
   }
 
   void GetTribblesBySubscription(TribbleResponse& _return, const std::string& userid) {
@@ -227,9 +336,43 @@ class TribblerHandler : virtual public TribblerIf {
   }
 
   void GetSubscriptions(SubscriptionResponse& _return, const std::string& userid) {
-    // Your implementation goes here
-    _return.status = TribbleStatus::NOT_IMPLEMENTED;
     printf("GetSubscriptions\n");
+    // get the user, if it doesn't exist, then return error, if it does exist, then get the list of subscribeTos and stick it in the return
+
+    // get the user info
+    KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
+    if(get_ret_val.status == KVStoreStatus::EKEYNOTFOUND)
+    {
+        _return.status = TribbleStatus::INVALID_USER;
+        return;
+    }
+
+    // user was found, so let's just take the subscribeTo list out of the object
+    Json::Reader reader;
+    Json::Value user_info;
+    bool parse_ret_value = reader.parse(get_ret_val.value, user_info);
+    if(parse_ret_value)
+    {
+        _return.status = TribbleStatus::FAILED; 
+        return;
+    }
+    
+    Json::Value subscribeToList = user_info[LIST_OF_SUBSCRIBERS];
+    if(subscribeToList == Json::nullValue)
+    {
+        // empty, so put nothing in the return value
+        _return.subscriptions.clear();
+        _return.status = TribbleStatus::OK;
+    }
+    else
+    {
+        for(unsigned int i = 0; i < subscribeToList.size(); i++)
+        {
+            // add the string to the return value
+            _return.subscriptions.push_back(subscribeToList[i].asString());
+        }
+        _return.status = TribbleStatus::OK;
+    }
   }
 
   // Functions from interacting with the storage RPC server
