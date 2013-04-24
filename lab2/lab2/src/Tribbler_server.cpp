@@ -53,7 +53,7 @@ class TribblerHandler : virtual public TribblerIf {
   string CUR_SET_NUM;
   string LIST_OF_SUBSCRIBERS;
 
-  int MAX_MSGS;
+  unsigned int MAX_MSGS;
 
   bool compare(const TribbleHelper& lhs, const TribbleHelper& rhs)
   {
@@ -63,16 +63,23 @@ class TribblerHandler : virtual public TribblerIf {
   void addTribbleHelper(list<TribbleHelper>& ths, TribbleHelper& th)
   {
     list<TribbleHelper>::iterator iter = ths.begin();
-    while(iter != ths.end() && iter->ts < th.ts)
+    while(iter != ths.end() && iter->ts > th.ts)
     {
         iter++;
     }    
     ths.insert(iter, th);
-    
+  }
+
+  void printThs(list<TribbleHelper>& ths)
+  {
     list<TribbleHelper>::iterator  it = ths.begin();
     while(it != ths.end())
     {
-        cout << "\t" << it->ts << endl;
+        cout << "\t" << it->userid << " " << it->ts << endl;
+        for(unsigned int i = 0; i < it->tribble_set.size(); i++)
+        {
+            cout << "\t\t" << it->tribble_set[it->tribble_set.size() - i - 1][MSG].asString() << " " << it->tribble_set[it->tribble_set.size() - i - 1][TIMESTAMP].asUInt64() << endl;
+        }
         it++;
     }
     cout << "---" << endl;
@@ -87,7 +94,7 @@ class TribblerHandler : virtual public TribblerIf {
     MSG = "msg";
     CUR_SET_NUM = "curSetNum";
     LIST_OF_SUBSCRIBERS = "listOfSubscribers";
-    MAX_MSGS = 10;
+    MAX_MSGS = 100;
     _storageServer = storageServer;
     _storageServerPort = storageServerPort;
   }
@@ -371,7 +378,7 @@ class TribblerHandler : virtual public TribblerIf {
     const Json::Value cur_set_num_val = user_info[CUR_SET_NUM];
     int cur_set_num = cur_set_num_val.asInt();
     
-    int count = 0;
+    unsigned int count = 0;
     for(int i = cur_set_num; i >= 0 && count < MAX_MSGS; i--)
     {
         char buf[10];
@@ -388,7 +395,7 @@ class TribblerHandler : virtual public TribblerIf {
         bool parse_ret_value = reader.parse(get_set_ret_val.value, tribble_set);
         if(parse_ret_value == false)
         {
-            cout << "GetTribbles parsing part 2 failed" << endl;
+            cout << "GetTribbles parsing failed" << endl;
             _return.status = TribbleStatus::FAILED; 
             return;
         }
@@ -441,7 +448,6 @@ class TribblerHandler : virtual public TribblerIf {
     if(subscribeToList.size() == 0)
     {
         // empty, so put nothing in the return value
-        cout << "GetTribblesBySubscription pt 1.1, subscribeToList.size() was 0" << endl;
         _return.tribbles.clear();
         _return.status = TribbleStatus::OK;
     }
@@ -450,7 +456,6 @@ class TribblerHandler : virtual public TribblerIf {
         list<TribbleHelper> ths;
         for(unsigned int i = 0; i < subscribeToList.size(); i++)
         {
-            cout << "GetTribblesBySubscription pt 1.2, inside for loop" << endl;
             // get all the information to create a lhs 
             TribbleHelper th;
             th.userid = subscribeToList[i].asString();
@@ -468,7 +473,7 @@ class TribblerHandler : virtual public TribblerIf {
             bool parse_ret_value = reader.parse(get_sub_ret_val.value, subscribeto_user_info);
             if(parse_ret_value == false)
             {
-                cout << "GetTribblesBySubscription pt 3 couldnt parse" << subscribeToList.size() << endl;
+                cout << "GetTribblesBySubscription couldnt parse" << subscribeToList.size() << endl;
                 continue;
             }
 
@@ -487,15 +492,27 @@ class TribblerHandler : virtual public TribblerIf {
             parse_ret_value = reader.parse(get_set_ret_val.value, tribble_set);
             if(parse_ret_value == false)
             {
-                cout << "GetTribblesBySubscription pt 3.1 couldnt parse: " << get_set_ret_val.value << endl;
-                continue; // subscribeto hasn't pospted anything yet
+                if(th.set == 0)
+                {
+                    continue; // subscribeto hasn't pospted anything yet
+                }
+                else
+                {
+                    th.set = th.set - 1;
+                    sprintf(buf, "%d", th.set);
+                    get_set_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(th.userid));
+                    parse_ret_value = reader.parse(get_set_ret_val.value, tribble_set);
+                    if(parse_ret_value == false)
+                    {
+                        continue;
+                    }
+                }
             }
             th.idx = tribble_set.size() - 1;
             th.tribble_set = tribble_set;
             th.ts = tribble_set[th.idx][TIMESTAMP].asUInt64();
 
             addTribbleHelper(ths, th);
-            cout << "GetTribblesBySubscription pt 3.2, added th" << endl;
         }
                 
         cout << "GetTribblesBySubscription pt 4" << endl;
@@ -503,10 +520,8 @@ class TribblerHandler : virtual public TribblerIf {
 
         // until the return vector's size is 100 or there is nothing else in the list
             // for the smallest one, create its tribbler and add it to the list
-        while(_return.tribbles.size() < 100 && ths.size() > 0)
+        while(_return.tribbles.size() < MAX_MSGS && ths.size() > 0)
         {
-            cout << "GetTribblesBySubscription pt 4.1 inside while" << subscribeToList.size() << endl;
-
             Tribble t; 
             t.posted = ths.front().ts;
             t.userid = ths.front().userid;
@@ -545,7 +560,7 @@ class TribblerHandler : virtual public TribblerIf {
                     bool parse_newset_ret_value = reader.parse(get_newset_ret_val.value, tribble_set);
                     if(parse_newset_ret_value == false)
                     {
-                        cout << "GetTribblesBySubscription pt 5 couldnt parse" << subscribeToList.size() << endl;
+                        cout << "GetTribblesBySubscription couldnt parse" << subscribeToList.size() << endl;
                         continue; // WHAT DO???
                     }
                     
@@ -561,8 +576,6 @@ class TribblerHandler : virtual public TribblerIf {
             // done with consistency check
         }
 
-        cout << "GetTribblesBySubscription pt 6" << endl;
-        cout << "GetTribblesBySubscription return tribbles size: " << _return.tribbles.size() << endl;
         _return.status = TribbleStatus::OK;
     }
   }
@@ -580,8 +593,6 @@ class TribblerHandler : virtual public TribblerIf {
         return;
     }
     
-    cout << "GetSubscriptions GET returned: " << get_ret_val.status << endl;
-
     // user was found, so let's just take the subscribeTo list out of the object
     Json::Reader reader;
     Json::Value user_info;
@@ -654,7 +665,6 @@ class TribblerHandler : virtual public TribblerIf {
 
   KVStoreStatus::type Put(std::string key, std::string value) {
     // Making the RPC Call to the Storage server
-    cout << "PUT key: " << key << " value: " << value << endl;
     boost::shared_ptr<TSocket> socket(new TSocket(_storageServer, _storageServerPort));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -667,7 +677,6 @@ class TribblerHandler : virtual public TribblerIf {
   }
 
   KeyValueStore::GetResponse Get(std::string key) {
-    cout << "GET key: " << key << endl;
     KeyValueStore::GetResponse response;
     // Making the RPC Call to the Storage server
     boost::shared_ptr<TSocket> socket(new TSocket(_storageServer, _storageServerPort));
@@ -677,7 +686,6 @@ class TribblerHandler : virtual public TribblerIf {
     transport->open();
     client.Get(response, key);
     transport->close();
-    cout << "GET status was: " << response.status << endl;
     return response;
   }
 
