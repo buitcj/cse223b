@@ -4,13 +4,6 @@
 /*
 TODO:
 
--impl commit queue - separate thread?  
-
-*/
-
-/*
-DONE:
--impl get
 -impl put
     -call putphase1 on all the servers
     -on ack of putphase1 on all servers, call putphase2 on all servers
@@ -18,11 +11,11 @@ DONE:
     -store key/value in the commit queue
 -impl putphase2
     -commit the key/value
+-impl commit queue - separate thread?  
+
 */
 
 #include "KeyValueStore.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
@@ -80,13 +73,10 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
   KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid) {
     // call PutPhase1Internal on all the other backend servers
     // if any of them return a failure, keep moving, but remove that server from the list 
-    // call PutPhase2Internal on all the backend servers
     // return ok if there are still servers
 
     printf("Put\n");
 
-
-    // PHASE 1 ===========================
     vector<pair<string, int> >::iterator iter = _backendServerVector.begin();
     while(iter != _backendServerVector.end())
     {
@@ -103,40 +93,7 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
             if(put_st != KVStoreStatus::OK)
             {
                 // SHOULD NEVER HAPPEN**********************
-                // iter = _backendServerVector.erase(iter);
-                return KVStoreStatus::INTERNAL_FAILURE;
-            }
-            else
-            {
-                iter++;
-            }
-        }
-        catch (TTransportException t)
-        {
-            // this server failed 
-            iter = _backendServerVector.erase(iter);
-        }
-    } 
-
-    // PHASE 2 =================
-    iter = _backendServerVector.begin();
-    while(iter != _backendServerVector.end())
-    {
-        boost::shared_ptr<TSocket> socket(new TSocket(iter->first, iter->second));
-        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-        KeyValueStoreClient client(protocol);
-        try {
-            transport->open();
-            string out_clientid("tribbleserver");
-            KVStoreStatus::type put_st = client.PutPhase2Internal(key, true, out_clientid);
-            transport->close();
-
-            if(put_st != KVStoreStatus::OK)
-            {
-                // SHOULD NEVER HAPPEN**********************
-                // iter = _backendServerVector.erase(iter);
-                return KVStoreStatus::INTERNAL_FAILURE;
+                iter = _backendServerVector.erase(iter);
             }
             else
             {
@@ -161,33 +118,14 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
 
   KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) 
   {
-    //  just stick the key/value into the commit buffer
-    pair<string, string> put_op(key, value);
-    _uncommittedBuffer.push_back(put_op);
-    return KVStoreStatus::OK;
+    printf("PutPhase1Internal\n");
+    return KVStoreStatus::NOT_IMPLEMENTED;
   }
 
   KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid)
   {
     printf("PutPhase2Internal\n");
-    
-    // SHOULD PROBABLY HAVE A GUID FOR MULTIPLE PUTS TO THE SAME KEY ********************
-    list<pair<string, string> >::iterator iter = _uncommittedBuffer.begin();
-    while(iter != _uncommittedBuffer.end())
-    {
-        if(iter->first.compare(key) == 0)
-        {
-            _kvs[key] = iter->second;
-            _uncommitted.erase(iter);
-            return KVStoreStatus::OK;
-        }
-        else
-        {
-            iter++;
-        }
-    }
-
-    return KVStoreStatus::EKEYNOTFOUND;
+    return KVStoreStatus::NOT_IMPLEMENTED;
   }
 
   private:
@@ -195,7 +133,6 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     vector < pair<string, int> > _backendServerVector;
     map<string, string> _kvs;
 
-    list<pair<string, string> > _uncommittedBuffer;
 };
 
 int main(int argc, char **argv) {

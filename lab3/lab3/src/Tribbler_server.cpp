@@ -100,6 +100,15 @@ class TribblerHandler : virtual public TribblerIf {
     } 
   }
 
+  void vectorTimestampToJson(std::vector<int64_t>& vec, Json::Value& root)
+  {
+    root = Json::Value(Json::arrayValue);
+    for(unsigned int i = 0; i < vec.size(); i++)
+    {
+        root.append(Json::Value((Json::Int64)vec.at(i))); //***
+    }
+  }
+
   TribblerHandler(std::string kvServer, int kvServerPort) {
     // Your initialization goes here
     USER_PREFIX = "jbu_user_";
@@ -314,6 +323,7 @@ class TribblerHandler : virtual public TribblerIf {
 
     // set up the tribble
     Json::Value tribble;
+    // NEED TO FIX THIS *******************************************
     tribble[TIMESTAMP] = Json::Value((Json::UInt64) time(NULL));
     tribble[MSG] = tribbleContents;
 
