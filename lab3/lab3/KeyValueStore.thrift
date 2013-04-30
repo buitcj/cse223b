@@ -42,8 +42,10 @@ struct GetListResponse {
 
 service KeyValueStore {
     GetResponse Get(1:string key),
-    GetListResponse GetList(1:string key),
     KVStoreStatus Put(1:string key, 2:string value, 3:string clientid),
-    KVStoreStatus AddToList(1:string key, 2:string value, 3:string clientid),
-    KVStoreStatus RemoveFromList(1:string key, 2:string value, 3:string clientid)
+    KVStoreStatus PutPhase1Internal(1:string key, 2:string value, 3:string clientid),
+    KVStoreStatus PutPhase2Internal(1:string key, 2:bool commit, 3:string clientid),
+    //GetListResponse GetList(1:string key),
+    //KVStoreStatus AddToList(1:string key, 2:string value, 3:string clientid),
+    //KVStoreStatus RemoveFromList(1:string key, 2:string value, 3:string clientid)
 }

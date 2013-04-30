@@ -1,7 +1,7 @@
 THRIFT_DIR := /usr/local/include/thrift
 BOOST_DIR := /usr/local/include
 INCLUDE := ../include
-TRIBBLER_SRC := Tribbler.cpp Tribbler_constants.cpp Tribbler_types.cpp
+TRIBBLER_SRC := Tribbler.cpp Tribbler_constants.cpp Tribbler_types.cpp OrderObject.cpp jsoncpp.cpp
 TRIBBLER_OBJ := $(patsubst %.cpp,%.o, $(TRIBBLER_SRC))
 KV_SRC := KeyValueStore.cpp KeyValueStore_types.cpp KeyValueStore_constants.cpp
 KV_OBJ := $(patsubst %.cpp,%.o, $(KV_SRC))

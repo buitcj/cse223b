@@ -16,10 +16,9 @@ class KeyValueStoreIf {
  public:
   virtual ~KeyValueStoreIf() {}
   virtual void Get(GetResponse& _return, const std::string& key) = 0;
-  virtual void GetList(GetListResponse& _return, const std::string& key) = 0;
   virtual KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid) = 0;
-  virtual KVStoreStatus::type AddToList(const std::string& key, const std::string& value, const std::string& clientid) = 0;
-  virtual KVStoreStatus::type RemoveFromList(const std::string& key, const std::string& value, const std::string& clientid) = 0;
+  virtual KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) = 0;
+  virtual KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid) = 0;
 };
 
 class KeyValueStoreIfFactory {
@@ -52,18 +51,15 @@ class KeyValueStoreNull : virtual public KeyValueStoreIf {
   void Get(GetResponse& /* _return */, const std::string& /* key */) {
     return;
   }
-  void GetList(GetListResponse& /* _return */, const std::string& /* key */) {
-    return;
-  }
   KVStoreStatus::type Put(const std::string& /* key */, const std::string& /* value */, const std::string& /* clientid */) {
     KVStoreStatus::type _return = (KVStoreStatus::type)0;
     return _return;
   }
-  KVStoreStatus::type AddToList(const std::string& /* key */, const std::string& /* value */, const std::string& /* clientid */) {
+  KVStoreStatus::type PutPhase1Internal(const std::string& /* key */, const std::string& /* value */, const std::string& /* clientid */) {
     KVStoreStatus::type _return = (KVStoreStatus::type)0;
     return _return;
   }
-  KVStoreStatus::type RemoveFromList(const std::string& /* key */, const std::string& /* value */, const std::string& /* clientid */) {
+  KVStoreStatus::type PutPhase2Internal(const std::string& /* key */, const bool /* commit */, const std::string& /* clientid */) {
     KVStoreStatus::type _return = (KVStoreStatus::type)0;
     return _return;
   }
@@ -172,114 +168,6 @@ class KeyValueStore_Get_presult {
   GetResponse* success;
 
   _KeyValueStore_Get_presult__isset __isset;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-
-};
-
-typedef struct _KeyValueStore_GetList_args__isset {
-  _KeyValueStore_GetList_args__isset() : key(false) {}
-  bool key;
-} _KeyValueStore_GetList_args__isset;
-
-class KeyValueStore_GetList_args {
- public:
-
-  KeyValueStore_GetList_args() : key() {
-  }
-
-  virtual ~KeyValueStore_GetList_args() throw() {}
-
-  std::string key;
-
-  _KeyValueStore_GetList_args__isset __isset;
-
-  void __set_key(const std::string& val) {
-    key = val;
-  }
-
-  bool operator == (const KeyValueStore_GetList_args & rhs) const
-  {
-    if (!(key == rhs.key))
-      return false;
-    return true;
-  }
-  bool operator != (const KeyValueStore_GetList_args &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const KeyValueStore_GetList_args & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class KeyValueStore_GetList_pargs {
- public:
-
-
-  virtual ~KeyValueStore_GetList_pargs() throw() {}
-
-  const std::string* key;
-
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _KeyValueStore_GetList_result__isset {
-  _KeyValueStore_GetList_result__isset() : success(false) {}
-  bool success;
-} _KeyValueStore_GetList_result__isset;
-
-class KeyValueStore_GetList_result {
- public:
-
-  KeyValueStore_GetList_result() {
-  }
-
-  virtual ~KeyValueStore_GetList_result() throw() {}
-
-  GetListResponse success;
-
-  _KeyValueStore_GetList_result__isset __isset;
-
-  void __set_success(const GetListResponse& val) {
-    success = val;
-  }
-
-  bool operator == (const KeyValueStore_GetList_result & rhs) const
-  {
-    if (!(success == rhs.success))
-      return false;
-    return true;
-  }
-  bool operator != (const KeyValueStore_GetList_result &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const KeyValueStore_GetList_result & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _KeyValueStore_GetList_presult__isset {
-  _KeyValueStore_GetList_presult__isset() : success(false) {}
-  bool success;
-} _KeyValueStore_GetList_presult__isset;
-
-class KeyValueStore_GetList_presult {
- public:
-
-
-  virtual ~KeyValueStore_GetList_presult() throw() {}
-
-  GetListResponse* success;
-
-  _KeyValueStore_GetList_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -411,26 +299,26 @@ class KeyValueStore_Put_presult {
 
 };
 
-typedef struct _KeyValueStore_AddToList_args__isset {
-  _KeyValueStore_AddToList_args__isset() : key(false), value(false), clientid(false) {}
+typedef struct _KeyValueStore_PutPhase1Internal_args__isset {
+  _KeyValueStore_PutPhase1Internal_args__isset() : key(false), value(false), clientid(false) {}
   bool key;
   bool value;
   bool clientid;
-} _KeyValueStore_AddToList_args__isset;
+} _KeyValueStore_PutPhase1Internal_args__isset;
 
-class KeyValueStore_AddToList_args {
+class KeyValueStore_PutPhase1Internal_args {
  public:
 
-  KeyValueStore_AddToList_args() : key(), value(), clientid() {
+  KeyValueStore_PutPhase1Internal_args() : key(), value(), clientid() {
   }
 
-  virtual ~KeyValueStore_AddToList_args() throw() {}
+  virtual ~KeyValueStore_PutPhase1Internal_args() throw() {}
 
   std::string key;
   std::string value;
   std::string clientid;
 
-  _KeyValueStore_AddToList_args__isset __isset;
+  _KeyValueStore_PutPhase1Internal_args__isset __isset;
 
   void __set_key(const std::string& val) {
     key = val;
@@ -444,7 +332,7 @@ class KeyValueStore_AddToList_args {
     clientid = val;
   }
 
-  bool operator == (const KeyValueStore_AddToList_args & rhs) const
+  bool operator == (const KeyValueStore_PutPhase1Internal_args & rhs) const
   {
     if (!(key == rhs.key))
       return false;
@@ -454,11 +342,11 @@ class KeyValueStore_AddToList_args {
       return false;
     return true;
   }
-  bool operator != (const KeyValueStore_AddToList_args &rhs) const {
+  bool operator != (const KeyValueStore_PutPhase1Internal_args &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const KeyValueStore_AddToList_args & ) const;
+  bool operator < (const KeyValueStore_PutPhase1Internal_args & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -466,11 +354,11 @@ class KeyValueStore_AddToList_args {
 };
 
 
-class KeyValueStore_AddToList_pargs {
+class KeyValueStore_PutPhase1Internal_pargs {
  public:
 
 
-  virtual ~KeyValueStore_AddToList_pargs() throw() {}
+  virtual ~KeyValueStore_PutPhase1Internal_pargs() throw() {}
 
   const std::string* key;
   const std::string* value;
@@ -480,111 +368,111 @@ class KeyValueStore_AddToList_pargs {
 
 };
 
-typedef struct _KeyValueStore_AddToList_result__isset {
-  _KeyValueStore_AddToList_result__isset() : success(false) {}
+typedef struct _KeyValueStore_PutPhase1Internal_result__isset {
+  _KeyValueStore_PutPhase1Internal_result__isset() : success(false) {}
   bool success;
-} _KeyValueStore_AddToList_result__isset;
+} _KeyValueStore_PutPhase1Internal_result__isset;
 
-class KeyValueStore_AddToList_result {
+class KeyValueStore_PutPhase1Internal_result {
  public:
 
-  KeyValueStore_AddToList_result() : success((KVStoreStatus::type)0) {
+  KeyValueStore_PutPhase1Internal_result() : success((KVStoreStatus::type)0) {
   }
 
-  virtual ~KeyValueStore_AddToList_result() throw() {}
+  virtual ~KeyValueStore_PutPhase1Internal_result() throw() {}
 
   KVStoreStatus::type success;
 
-  _KeyValueStore_AddToList_result__isset __isset;
+  _KeyValueStore_PutPhase1Internal_result__isset __isset;
 
   void __set_success(const KVStoreStatus::type val) {
     success = val;
   }
 
-  bool operator == (const KeyValueStore_AddToList_result & rhs) const
+  bool operator == (const KeyValueStore_PutPhase1Internal_result & rhs) const
   {
     if (!(success == rhs.success))
       return false;
     return true;
   }
-  bool operator != (const KeyValueStore_AddToList_result &rhs) const {
+  bool operator != (const KeyValueStore_PutPhase1Internal_result &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const KeyValueStore_AddToList_result & ) const;
+  bool operator < (const KeyValueStore_PutPhase1Internal_result & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-typedef struct _KeyValueStore_AddToList_presult__isset {
-  _KeyValueStore_AddToList_presult__isset() : success(false) {}
+typedef struct _KeyValueStore_PutPhase1Internal_presult__isset {
+  _KeyValueStore_PutPhase1Internal_presult__isset() : success(false) {}
   bool success;
-} _KeyValueStore_AddToList_presult__isset;
+} _KeyValueStore_PutPhase1Internal_presult__isset;
 
-class KeyValueStore_AddToList_presult {
+class KeyValueStore_PutPhase1Internal_presult {
  public:
 
 
-  virtual ~KeyValueStore_AddToList_presult() throw() {}
+  virtual ~KeyValueStore_PutPhase1Internal_presult() throw() {}
 
   KVStoreStatus::type* success;
 
-  _KeyValueStore_AddToList_presult__isset __isset;
+  _KeyValueStore_PutPhase1Internal_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
 };
 
-typedef struct _KeyValueStore_RemoveFromList_args__isset {
-  _KeyValueStore_RemoveFromList_args__isset() : key(false), value(false), clientid(false) {}
+typedef struct _KeyValueStore_PutPhase2Internal_args__isset {
+  _KeyValueStore_PutPhase2Internal_args__isset() : key(false), commit(false), clientid(false) {}
   bool key;
-  bool value;
+  bool commit;
   bool clientid;
-} _KeyValueStore_RemoveFromList_args__isset;
+} _KeyValueStore_PutPhase2Internal_args__isset;
 
-class KeyValueStore_RemoveFromList_args {
+class KeyValueStore_PutPhase2Internal_args {
  public:
 
-  KeyValueStore_RemoveFromList_args() : key(), value(), clientid() {
+  KeyValueStore_PutPhase2Internal_args() : key(), commit(0), clientid() {
   }
 
-  virtual ~KeyValueStore_RemoveFromList_args() throw() {}
+  virtual ~KeyValueStore_PutPhase2Internal_args() throw() {}
 
   std::string key;
-  std::string value;
+  bool commit;
   std::string clientid;
 
-  _KeyValueStore_RemoveFromList_args__isset __isset;
+  _KeyValueStore_PutPhase2Internal_args__isset __isset;
 
   void __set_key(const std::string& val) {
     key = val;
   }
 
-  void __set_value(const std::string& val) {
-    value = val;
+  void __set_commit(const bool val) {
+    commit = val;
   }
 
   void __set_clientid(const std::string& val) {
     clientid = val;
   }
 
-  bool operator == (const KeyValueStore_RemoveFromList_args & rhs) const
+  bool operator == (const KeyValueStore_PutPhase2Internal_args & rhs) const
   {
     if (!(key == rhs.key))
       return false;
-    if (!(value == rhs.value))
+    if (!(commit == rhs.commit))
       return false;
     if (!(clientid == rhs.clientid))
       return false;
     return true;
   }
-  bool operator != (const KeyValueStore_RemoveFromList_args &rhs) const {
+  bool operator != (const KeyValueStore_PutPhase2Internal_args &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const KeyValueStore_RemoveFromList_args & ) const;
+  bool operator < (const KeyValueStore_PutPhase2Internal_args & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -592,72 +480,72 @@ class KeyValueStore_RemoveFromList_args {
 };
 
 
-class KeyValueStore_RemoveFromList_pargs {
+class KeyValueStore_PutPhase2Internal_pargs {
  public:
 
 
-  virtual ~KeyValueStore_RemoveFromList_pargs() throw() {}
+  virtual ~KeyValueStore_PutPhase2Internal_pargs() throw() {}
 
   const std::string* key;
-  const std::string* value;
+  const bool* commit;
   const std::string* clientid;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-typedef struct _KeyValueStore_RemoveFromList_result__isset {
-  _KeyValueStore_RemoveFromList_result__isset() : success(false) {}
+typedef struct _KeyValueStore_PutPhase2Internal_result__isset {
+  _KeyValueStore_PutPhase2Internal_result__isset() : success(false) {}
   bool success;
-} _KeyValueStore_RemoveFromList_result__isset;
+} _KeyValueStore_PutPhase2Internal_result__isset;
 
-class KeyValueStore_RemoveFromList_result {
+class KeyValueStore_PutPhase2Internal_result {
  public:
 
-  KeyValueStore_RemoveFromList_result() : success((KVStoreStatus::type)0) {
+  KeyValueStore_PutPhase2Internal_result() : success((KVStoreStatus::type)0) {
   }
 
-  virtual ~KeyValueStore_RemoveFromList_result() throw() {}
+  virtual ~KeyValueStore_PutPhase2Internal_result() throw() {}
 
   KVStoreStatus::type success;
 
-  _KeyValueStore_RemoveFromList_result__isset __isset;
+  _KeyValueStore_PutPhase2Internal_result__isset __isset;
 
   void __set_success(const KVStoreStatus::type val) {
     success = val;
   }
 
-  bool operator == (const KeyValueStore_RemoveFromList_result & rhs) const
+  bool operator == (const KeyValueStore_PutPhase2Internal_result & rhs) const
   {
     if (!(success == rhs.success))
       return false;
     return true;
   }
-  bool operator != (const KeyValueStore_RemoveFromList_result &rhs) const {
+  bool operator != (const KeyValueStore_PutPhase2Internal_result &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const KeyValueStore_RemoveFromList_result & ) const;
+  bool operator < (const KeyValueStore_PutPhase2Internal_result & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-typedef struct _KeyValueStore_RemoveFromList_presult__isset {
-  _KeyValueStore_RemoveFromList_presult__isset() : success(false) {}
+typedef struct _KeyValueStore_PutPhase2Internal_presult__isset {
+  _KeyValueStore_PutPhase2Internal_presult__isset() : success(false) {}
   bool success;
-} _KeyValueStore_RemoveFromList_presult__isset;
+} _KeyValueStore_PutPhase2Internal_presult__isset;
 
-class KeyValueStore_RemoveFromList_presult {
+class KeyValueStore_PutPhase2Internal_presult {
  public:
 
 
-  virtual ~KeyValueStore_RemoveFromList_presult() throw() {}
+  virtual ~KeyValueStore_PutPhase2Internal_presult() throw() {}
 
   KVStoreStatus::type* success;
 
-  _KeyValueStore_RemoveFromList_presult__isset __isset;
+  _KeyValueStore_PutPhase2Internal_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -686,18 +574,15 @@ class KeyValueStoreClient : virtual public KeyValueStoreIf {
   void Get(GetResponse& _return, const std::string& key);
   void send_Get(const std::string& key);
   void recv_Get(GetResponse& _return);
-  void GetList(GetListResponse& _return, const std::string& key);
-  void send_GetList(const std::string& key);
-  void recv_GetList(GetListResponse& _return);
   KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid);
   void send_Put(const std::string& key, const std::string& value, const std::string& clientid);
   KVStoreStatus::type recv_Put();
-  KVStoreStatus::type AddToList(const std::string& key, const std::string& value, const std::string& clientid);
-  void send_AddToList(const std::string& key, const std::string& value, const std::string& clientid);
-  KVStoreStatus::type recv_AddToList();
-  KVStoreStatus::type RemoveFromList(const std::string& key, const std::string& value, const std::string& clientid);
-  void send_RemoveFromList(const std::string& key, const std::string& value, const std::string& clientid);
-  KVStoreStatus::type recv_RemoveFromList();
+  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid);
+  void send_PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid);
+  KVStoreStatus::type recv_PutPhase1Internal();
+  KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid);
+  void send_PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid);
+  KVStoreStatus::type recv_PutPhase2Internal();
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -714,18 +599,16 @@ class KeyValueStoreProcessor : public ::apache::thrift::TDispatchProcessor {
   typedef std::map<std::string, ProcessFunction> ProcessMap;
   ProcessMap processMap_;
   void process_Get(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_GetList(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_Put(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_AddToList(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_RemoveFromList(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_PutPhase1Internal(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_PutPhase2Internal(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   KeyValueStoreProcessor(boost::shared_ptr<KeyValueStoreIf> iface) :
     iface_(iface) {
     processMap_["Get"] = &KeyValueStoreProcessor::process_Get;
-    processMap_["GetList"] = &KeyValueStoreProcessor::process_GetList;
     processMap_["Put"] = &KeyValueStoreProcessor::process_Put;
-    processMap_["AddToList"] = &KeyValueStoreProcessor::process_AddToList;
-    processMap_["RemoveFromList"] = &KeyValueStoreProcessor::process_RemoveFromList;
+    processMap_["PutPhase1Internal"] = &KeyValueStoreProcessor::process_PutPhase1Internal;
+    processMap_["PutPhase2Internal"] = &KeyValueStoreProcessor::process_PutPhase2Internal;
   }
 
   virtual ~KeyValueStoreProcessor() {}
@@ -764,16 +647,6 @@ class KeyValueStoreMultiface : virtual public KeyValueStoreIf {
     return;
   }
 
-  void GetList(GetListResponse& _return, const std::string& key) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->GetList(_return, key);
-    }
-    ifaces_[i]->GetList(_return, key);
-    return;
-  }
-
   KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid) {
     size_t sz = ifaces_.size();
     size_t i = 0;
@@ -783,22 +656,22 @@ class KeyValueStoreMultiface : virtual public KeyValueStoreIf {
     return ifaces_[i]->Put(key, value, clientid);
   }
 
-  KVStoreStatus::type AddToList(const std::string& key, const std::string& value, const std::string& clientid) {
+  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->AddToList(key, value, clientid);
+      ifaces_[i]->PutPhase1Internal(key, value, clientid);
     }
-    return ifaces_[i]->AddToList(key, value, clientid);
+    return ifaces_[i]->PutPhase1Internal(key, value, clientid);
   }
 
-  KVStoreStatus::type RemoveFromList(const std::string& key, const std::string& value, const std::string& clientid) {
+  KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->RemoveFromList(key, value, clientid);
+      ifaces_[i]->PutPhase2Internal(key, commit, clientid);
     }
-    return ifaces_[i]->RemoveFromList(key, value, clientid);
+    return ifaces_[i]->PutPhase2Internal(key, commit, clientid);
   }
 
 };

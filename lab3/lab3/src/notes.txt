@@ -1,0 +1,54 @@
+It is responsibility of the cluster of the backend Key Value servers to ensure that the clients connected to the different Tribbler servers see a consistent stream of Tribbles.
+
+Each backend server must forward the RPC calls that modify the backend store to all other live backend servers.
+
+A backend server need not include a recently posted tribble in the GetTribble* RPC calls made by the Tribbler server, and, most likely, should buffer them for some period of time to allow reordering and meet consistency requirements. However, it must include the posted tribble in any GetTribbles() or GetTribblesBySubscription request made after two seconds of the original submission of the tribble at an initial backend server---assuming the original server is still alive. i.e. the maximum allowed delay between posting a tribble and getting the tribble is 2 seconds.
+
+This is because each of the above responses maintains the relative ordering between 
+i) Tribbles posted by the same user: "ATribble2" appears after "ATribble1" and "[RT@Alice] ATribble2" appears after "BTribble1" and, 
+ii) Re-tribbed tribble and the original tribble: "[RT@Alice]: ATribble2" appears after "ATribble2".
+
+KeyValueStore_server
+  private:
+    int _id;
+    vector < pair<string, int> > _backendServerVector;
+    map<string, string> _kvs;
+    list<pair<string, string> > _uncommittedBuffer;
+
+struct KVStoreStatus {
+  enum type {
+    OK = 1,
+    EKEYNOTFOUND = 2,
+    EITEMNOTFOUND = 3,
+    EPUTFAILED = 4,
+    EITEMEXISTS = 5,
+    INTERNAL_FAILURE = 6,
+    NOT_IMPLEMENTED = 7
+  };
+};
+
+GetResponse
+  KVStoreStatus::type status;
+  std::string value;
+
+GetListResponse
+  KVStoreStatus::type status;
+  std::vector<std::string>  values;
+
+struct TribbleStatus {
+  enum type {
+    OK = 1,
+    EEXISTS = 2,
+    INVALID_USER = 3,
+    INVALID_SUBSCRIBETO = 4,
+    NOT_IMPLEMENTED = 5,
+    STORE_FAILED = 6,
+    INTERNAL_FAILURE = 7
+  };
+};
+
+Tribble
+  std::string userid;
+  std::vector<int64_t>  posted;
+  std::string contents;
+
