@@ -41,6 +41,7 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
 
   KeyValueStoreHandler(int argc, char** argv) {
     // Your initialization goes here
+    _initialized = false;
     SET_PREFIX = "set_";
 
     _id = atoi(argv[1]);
@@ -55,6 +56,8 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
       _backendServerVector.push_back(make_pair(peer_ip, peer_port));
       cout << "Backend server at: " << peer_ip << " on port: " << peer_port << endl;
     }
+
+    // ATTEMPT TO SYNC WITH ONE OF THE OTHER SERVERS
   }
 
   void Get(GetResponse& _return, const std::string& key) {
@@ -75,10 +78,13 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
   KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid) {
     // call PutPhase1Internal on all the other backend servers
     // if any of them return a failure, keep moving, but remove that server from the list 
+    // call PutPhase2Internal on all the backend servers
     // return ok if there are still servers
 
     printf("Put\n");
 
+
+    // PHASE 1 ===========================
     vector<pair<string, int> >::iterator iter = _backendServerVector.begin();
     while(iter != _backendServerVector.end())
     {
@@ -95,7 +101,40 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
             if(put_st != KVStoreStatus::OK)
             {
                 // SHOULD NEVER HAPPEN**********************
-                iter = _backendServerVector.erase(iter);
+                // iter = _backendServerVector.erase(iter);
+                return KVStoreStatus::INTERNAL_FAILURE;
+            }
+            else
+            {
+                iter++;
+            }
+        }
+        catch (TTransportException t)
+        {
+            // this server failed 
+            iter = _backendServerVector.erase(iter);
+        }
+    } 
+
+    // PHASE 2 =================
+    iter = _backendServerVector.begin();
+    while(iter != _backendServerVector.end())
+    {
+        boost::shared_ptr<TSocket> socket(new TSocket(iter->first, iter->second));
+        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+        KeyValueStoreClient client(protocol);
+        try {
+            transport->open();
+            string out_clientid("tribbleserver");
+            KVStoreStatus::type put_st = client.PutPhase2Internal(key, true, out_clientid);
+            transport->close();
+
+            if(put_st != KVStoreStatus::OK)
+            {
+                // SHOULD NEVER HAPPEN**********************
+                // iter = _backendServerVector.erase(iter);
+                return KVStoreStatus::INTERNAL_FAILURE;
             }
             else
             {
@@ -119,27 +158,49 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
   }
 
   KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) {
-    // Your implementation goes here
-    printf("PutPhase1Internal\n");
-    return KVStoreStatus::NOT_IMPLEMENTED;
+    //  just stick the key/value into the commit buffer
+    pair<string, string> put_op(key, value);
+    _uncommittedBuffer.push_back(put_op);
+    return KVStoreStatus::OK;
   }
 
   KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid) {
-    // Your implementation goes here
     printf("PutPhase2Internal\n");
-    return KVStoreStatus::NOT_IMPLEMENTED;
+    
+    // SHOULD PROBABLY HAVE A GUID FOR MULTIPLE PUTS TO THE SAME KEY ********************
+    list<pair<string, string> >::iterator iter = _uncommittedBuffer.begin();
+    while(iter != _uncommittedBuffer.end())
+    {
+        if(iter->first.compare(key) == 0)
+        {
+            _kvs[key] = iter->second;
+            _uncommittedBuffer.erase(iter);
+            return KVStoreStatus::OK;
+        }
+        else
+        {
+            iter++;
+        }
+    }
+
+    return KVStoreStatus::EKEYNOTFOUND;
   }
 
   void Sync(SyncResponse& _return) {
     // Your implementation goes here
     printf("Sync\n");
+
+    _return.kvs = _kvs;
+    _return.status = KVStoreStatus::OK;
   }
 
   private:
     int _id;
     vector < pair<string, int> > _backendServerVector;
     map<string, string> _kvs;
+    bool _initialized;
 
+    list<pair<string, string> > _uncommittedBuffer;
 };
 
 int main(int argc, char **argv) {
