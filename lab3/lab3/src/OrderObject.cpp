@@ -3,20 +3,65 @@ using namespace std;
 
 namespace Tribbler{
 
+struct Ordering {
+  enum type {
+    LT,
+    GT,
+    EQ,
+    UNK
+  };
+};
+
 class OrderObject {
 public:
-    vector<int> vt;
-    int hostid;
-
-    void compare(OrderObject& vc2)
+    vector<int> _vt;
+    int _hostid;
+    
+    static Ordering::type compare(OrderObject& lhs, OrderObject& rhs)
     {
-        bool v1Bigger = false;
-        bool v2Bigger = false;
-        int p1 = 0;
-        int p2 = 0;
-        while(p1 < vt.size() && p2 < vc2.vt.size())
+        return lhs.compare(rhs);
+    }
+
+    Ordering::type compare(OrderObject& oo)
+    {
+        // ASSUMES vck
+        bool foundLarger = false;
+        bool foundSmaller = false;
+        for(unsigned int i = 0; i < oo._vt.size(); i++)
         {
-            
+            if(_vt[i] < oo._vt[i])
+            {
+                foundSmaller = true;
+            }
+            else if(_vt[i] > oo._vt[i])
+            {
+                foundLarger = true;
+            }
+        }
+
+        if(foundSmaller && !foundLarger)
+        {
+            return Ordering::LT;
+        }
+        else if(!foundSmaller && foundLarger)
+        {
+            return Ordering::GT;
+        }
+        else if(foundSmaller && foundLarger)
+        {
+            // unk
+            if(_hostid < oo._hostid)
+            {
+                return Ordering::LT;
+            }
+            else
+            {
+                return Ordering::GT;
+            }
+        }
+        else // (!foundLarger && !foundSmaller)
+        {
+            return Ordering::EQ;
         }
     }
 };

@@ -37,9 +37,12 @@ using namespace  ::KeyValueStore;
 
 class KeyValueStoreHandler : virtual public KeyValueStoreIf {
  public:
+  string SET_PREFIX;
 
   KeyValueStoreHandler(int argc, char** argv) {
     // Your initialization goes here
+    SET_PREFIX = "set_";
+
     _id = atoi(argv[1]);
     int index = 0;
 
