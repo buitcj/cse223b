@@ -132,6 +132,57 @@ class GetListResponse {
 
 void swap(GetListResponse &a, GetListResponse &b);
 
+typedef struct _SyncResponse__isset {
+  _SyncResponse__isset() : status(false), kvs(false) {}
+  bool status;
+  bool kvs;
+} _SyncResponse__isset;
+
+class SyncResponse {
+ public:
+
+  static const char* ascii_fingerprint; // = "B089C846F881A6F18D64AA924E6643EF";
+  static const uint8_t binary_fingerprint[16]; // = {0xB0,0x89,0xC8,0x46,0xF8,0x81,0xA6,0xF1,0x8D,0x64,0xAA,0x92,0x4E,0x66,0x43,0xEF};
+
+  SyncResponse() : status((KVStoreStatus::type)0) {
+  }
+
+  virtual ~SyncResponse() throw() {}
+
+  KVStoreStatus::type status;
+  std::map<std::string, std::string>  kvs;
+
+  _SyncResponse__isset __isset;
+
+  void __set_status(const KVStoreStatus::type val) {
+    status = val;
+  }
+
+  void __set_kvs(const std::map<std::string, std::string> & val) {
+    kvs = val;
+  }
+
+  bool operator == (const SyncResponse & rhs) const
+  {
+    if (!(status == rhs.status))
+      return false;
+    if (!(kvs == rhs.kvs))
+      return false;
+    return true;
+  }
+  bool operator != (const SyncResponse &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const SyncResponse & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+void swap(SyncResponse &a, SyncResponse &b);
+
 } // namespace
 
 #endif

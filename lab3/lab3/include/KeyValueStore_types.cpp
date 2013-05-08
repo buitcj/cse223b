@@ -204,4 +204,105 @@ void swap(GetListResponse &a, GetListResponse &b) {
   swap(a.__isset, b.__isset);
 }
 
+const char* SyncResponse::ascii_fingerprint = "B089C846F881A6F18D64AA924E6643EF";
+const uint8_t SyncResponse::binary_fingerprint[16] = {0xB0,0x89,0xC8,0x46,0xF8,0x81,0xA6,0xF1,0x8D,0x64,0xAA,0x92,0x4E,0x66,0x43,0xEF};
+
+uint32_t SyncResponse::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          int32_t ecast8;
+          xfer += iprot->readI32(ecast8);
+          this->status = (KVStoreStatus::type)ecast8;
+          this->__isset.status = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_MAP) {
+          {
+            this->kvs.clear();
+            uint32_t _size9;
+            ::apache::thrift::protocol::TType _ktype10;
+            ::apache::thrift::protocol::TType _vtype11;
+            xfer += iprot->readMapBegin(_ktype10, _vtype11, _size9);
+            uint32_t _i13;
+            for (_i13 = 0; _i13 < _size9; ++_i13)
+            {
+              std::string _key14;
+              xfer += iprot->readString(_key14);
+              std::string& _val15 = this->kvs[_key14];
+              xfer += iprot->readString(_val15);
+            }
+            xfer += iprot->readMapEnd();
+          }
+          this->__isset.kvs = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t SyncResponse::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("SyncResponse");
+
+  xfer += oprot->writeFieldBegin("status", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32((int32_t)this->status);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("kvs", ::apache::thrift::protocol::T_MAP, 2);
+  {
+    xfer += oprot->writeMapBegin(::apache::thrift::protocol::T_STRING, ::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->kvs.size()));
+    std::map<std::string, std::string> ::const_iterator _iter16;
+    for (_iter16 = this->kvs.begin(); _iter16 != this->kvs.end(); ++_iter16)
+    {
+      xfer += oprot->writeString(_iter16->first);
+      xfer += oprot->writeString(_iter16->second);
+    }
+    xfer += oprot->writeMapEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(SyncResponse &a, SyncResponse &b) {
+  using ::std::swap;
+  swap(a.status, b.status);
+  swap(a.kvs, b.kvs);
+  swap(a.__isset, b.__isset);
+}
+
 } // namespace

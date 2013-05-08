@@ -290,9 +290,9 @@ uint32_t KeyValueStore_Put_result::read(::apache::thrift::protocol::TProtocol* i
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast8;
-          xfer += iprot->readI32(ecast8);
-          this->success = (KVStoreStatus::type)ecast8;
+          int32_t ecast17;
+          xfer += iprot->readI32(ecast17);
+          this->success = (KVStoreStatus::type)ecast17;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -348,9 +348,9 @@ uint32_t KeyValueStore_Put_presult::read(::apache::thrift::protocol::TProtocol* 
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast9;
-          xfer += iprot->readI32(ecast9);
-          (*(this->success)) = (KVStoreStatus::type)ecast9;
+          int32_t ecast18;
+          xfer += iprot->readI32(ecast18);
+          (*(this->success)) = (KVStoreStatus::type)ecast18;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -488,9 +488,9 @@ uint32_t KeyValueStore_PutPhase1Internal_result::read(::apache::thrift::protocol
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast10;
-          xfer += iprot->readI32(ecast10);
-          this->success = (KVStoreStatus::type)ecast10;
+          int32_t ecast19;
+          xfer += iprot->readI32(ecast19);
+          this->success = (KVStoreStatus::type)ecast19;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -546,9 +546,9 @@ uint32_t KeyValueStore_PutPhase1Internal_presult::read(::apache::thrift::protoco
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast11;
-          xfer += iprot->readI32(ecast11);
-          (*(this->success)) = (KVStoreStatus::type)ecast11;
+          int32_t ecast20;
+          xfer += iprot->readI32(ecast20);
+          (*(this->success)) = (KVStoreStatus::type)ecast20;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -686,9 +686,9 @@ uint32_t KeyValueStore_PutPhase2Internal_result::read(::apache::thrift::protocol
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast12;
-          xfer += iprot->readI32(ecast12);
-          this->success = (KVStoreStatus::type)ecast12;
+          int32_t ecast21;
+          xfer += iprot->readI32(ecast21);
+          this->success = (KVStoreStatus::type)ecast21;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -744,9 +744,150 @@ uint32_t KeyValueStore_PutPhase2Internal_presult::read(::apache::thrift::protoco
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast13;
-          xfer += iprot->readI32(ecast13);
-          (*(this->success)) = (KVStoreStatus::type)ecast13;
+          int32_t ecast22;
+          xfer += iprot->readI32(ecast22);
+          (*(this->success)) = (KVStoreStatus::type)ecast22;
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t KeyValueStore_Sync_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    xfer += iprot->skip(ftype);
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t KeyValueStore_Sync_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("KeyValueStore_Sync_args");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t KeyValueStore_Sync_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("KeyValueStore_Sync_pargs");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t KeyValueStore_Sync_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->success.read(iprot);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t KeyValueStore_Sync_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("KeyValueStore_Sync_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRUCT, 0);
+    xfer += this->success.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t KeyValueStore_Sync_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += (*(this->success)).read(iprot);
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -1002,6 +1143,63 @@ KVStoreStatus::type KeyValueStoreClient::recv_PutPhase2Internal()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "PutPhase2Internal failed: unknown result");
 }
 
+void KeyValueStoreClient::Sync(SyncResponse& _return)
+{
+  send_Sync();
+  recv_Sync(_return);
+}
+
+void KeyValueStoreClient::send_Sync()
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("Sync", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  KeyValueStore_Sync_pargs args;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void KeyValueStoreClient::recv_Sync(SyncResponse& _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("Sync") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  KeyValueStore_Sync_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "Sync failed: unknown result");
+}
+
 bool KeyValueStoreProcessor::dispatchCall(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, const std::string& fname, int32_t seqid, void* callContext) {
   ProcessMap::iterator pfn;
   pfn = processMap_.find(fname);
@@ -1234,6 +1432,60 @@ void KeyValueStoreProcessor::process_PutPhase2Internal(int32_t seqid, ::apache::
 
   if (this->eventHandler_.get() != NULL) {
     this->eventHandler_->postWrite(ctx, "KeyValueStore.PutPhase2Internal", bytes);
+  }
+}
+
+void KeyValueStoreProcessor::process_Sync(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (this->eventHandler_.get() != NULL) {
+    ctx = this->eventHandler_->getContext("KeyValueStore.Sync", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "KeyValueStore.Sync");
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preRead(ctx, "KeyValueStore.Sync");
+  }
+
+  KeyValueStore_Sync_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postRead(ctx, "KeyValueStore.Sync", bytes);
+  }
+
+  KeyValueStore_Sync_result result;
+  try {
+    iface_->Sync(result.success);
+    result.__isset.success = true;
+  } catch (const std::exception& e) {
+    if (this->eventHandler_.get() != NULL) {
+      this->eventHandler_->handlerError(ctx, "KeyValueStore.Sync");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("Sync", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preWrite(ctx, "KeyValueStore.Sync");
+  }
+
+  oprot->writeMessageBegin("Sync", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postWrite(ctx, "KeyValueStore.Sync", bytes);
   }
 }
 

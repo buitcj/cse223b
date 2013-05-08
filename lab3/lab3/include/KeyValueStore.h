@@ -19,6 +19,7 @@ class KeyValueStoreIf {
   virtual KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid) = 0;
   virtual KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) = 0;
   virtual KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid) = 0;
+  virtual void Sync(SyncResponse& _return) = 0;
 };
 
 class KeyValueStoreIfFactory {
@@ -62,6 +63,9 @@ class KeyValueStoreNull : virtual public KeyValueStoreIf {
   KVStoreStatus::type PutPhase2Internal(const std::string& /* key */, const bool /* commit */, const std::string& /* clientid */) {
     KVStoreStatus::type _return = (KVStoreStatus::type)0;
     return _return;
+  }
+  void Sync(SyncResponse& /* _return */) {
+    return;
   }
 };
 
@@ -551,6 +555,100 @@ class KeyValueStore_PutPhase2Internal_presult {
 
 };
 
+
+class KeyValueStore_Sync_args {
+ public:
+
+  KeyValueStore_Sync_args() {
+  }
+
+  virtual ~KeyValueStore_Sync_args() throw() {}
+
+
+  bool operator == (const KeyValueStore_Sync_args & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const KeyValueStore_Sync_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const KeyValueStore_Sync_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class KeyValueStore_Sync_pargs {
+ public:
+
+
+  virtual ~KeyValueStore_Sync_pargs() throw() {}
+
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _KeyValueStore_Sync_result__isset {
+  _KeyValueStore_Sync_result__isset() : success(false) {}
+  bool success;
+} _KeyValueStore_Sync_result__isset;
+
+class KeyValueStore_Sync_result {
+ public:
+
+  KeyValueStore_Sync_result() {
+  }
+
+  virtual ~KeyValueStore_Sync_result() throw() {}
+
+  SyncResponse success;
+
+  _KeyValueStore_Sync_result__isset __isset;
+
+  void __set_success(const SyncResponse& val) {
+    success = val;
+  }
+
+  bool operator == (const KeyValueStore_Sync_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const KeyValueStore_Sync_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const KeyValueStore_Sync_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _KeyValueStore_Sync_presult__isset {
+  _KeyValueStore_Sync_presult__isset() : success(false) {}
+  bool success;
+} _KeyValueStore_Sync_presult__isset;
+
+class KeyValueStore_Sync_presult {
+ public:
+
+
+  virtual ~KeyValueStore_Sync_presult() throw() {}
+
+  SyncResponse* success;
+
+  _KeyValueStore_Sync_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class KeyValueStoreClient : virtual public KeyValueStoreIf {
  public:
   KeyValueStoreClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :
@@ -583,6 +681,9 @@ class KeyValueStoreClient : virtual public KeyValueStoreIf {
   KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid);
   void send_PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid);
   KVStoreStatus::type recv_PutPhase2Internal();
+  void Sync(SyncResponse& _return);
+  void send_Sync();
+  void recv_Sync(SyncResponse& _return);
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -602,6 +703,7 @@ class KeyValueStoreProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_Put(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_PutPhase1Internal(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_PutPhase2Internal(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_Sync(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   KeyValueStoreProcessor(boost::shared_ptr<KeyValueStoreIf> iface) :
     iface_(iface) {
@@ -609,6 +711,7 @@ class KeyValueStoreProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["Put"] = &KeyValueStoreProcessor::process_Put;
     processMap_["PutPhase1Internal"] = &KeyValueStoreProcessor::process_PutPhase1Internal;
     processMap_["PutPhase2Internal"] = &KeyValueStoreProcessor::process_PutPhase2Internal;
+    processMap_["Sync"] = &KeyValueStoreProcessor::process_Sync;
   }
 
   virtual ~KeyValueStoreProcessor() {}
@@ -672,6 +775,16 @@ class KeyValueStoreMultiface : virtual public KeyValueStoreIf {
       ifaces_[i]->PutPhase2Internal(key, commit, clientid);
     }
     return ifaces_[i]->PutPhase2Internal(key, commit, clientid);
+  }
+
+  void Sync(SyncResponse& _return) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->Sync(_return);
+    }
+    ifaces_[i]->Sync(_return);
+    return;
   }
 
 };

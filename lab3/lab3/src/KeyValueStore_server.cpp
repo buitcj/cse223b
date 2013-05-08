@@ -72,7 +72,6 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     return;
   }
 
-
   KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid) {
     // call PutPhase1Internal on all the other backend servers
     // if any of them return a failure, keep moving, but remove that server from the list 
@@ -119,16 +118,21 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     return KVStoreStatus::OK;
   }
 
-  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) 
-  {
+  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) {
+    // Your implementation goes here
     printf("PutPhase1Internal\n");
     return KVStoreStatus::NOT_IMPLEMENTED;
   }
 
-  KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid)
-  {
+  KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid) {
+    // Your implementation goes here
     printf("PutPhase2Internal\n");
     return KVStoreStatus::NOT_IMPLEMENTED;
+  }
+
+  void Sync(SyncResponse& _return) {
+    // Your implementation goes here
+    printf("Sync\n");
   }
 
   private:
@@ -155,22 +159,3 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-/*
-  void GetList(GetListResponse& _return, const std::string& key) {
-    // Your implementation goes here
-    printf("GetList\n");
-    _return.status =  KVStoreStatus::NOT_IMPLEMENTED;
-  }
-
-  KVStoreStatus::type AddToList(const std::string& key, const std::string& value, const std::string& clientid) {
-    // Your implementation goes here
-    printf("AddToList\n");
-    return KVStoreStatus::NOT_IMPLEMENTED;
-  }
-
-  KVStoreStatus::type RemoveFromList(const std::string& key, const std::string& value, const std::string& clientid) {
-    // Your implementation goes here
-    printf("RemoveFromList\n");
-    return KVStoreStatus::NOT_IMPLEMENTED;
-  }
-*/

@@ -36,6 +36,11 @@ struct GetListResponse {
     2: list<string> values
 }
 
+struct SyncResponse {
+    1: KVStoreStatus status,
+    2: map<string, string> kvs
+}
+
 /**
  * RPC services offered by the backed KeyValues store.
  */
@@ -45,6 +50,7 @@ service KeyValueStore {
     KVStoreStatus Put(1:string key, 2:string value, 3:string clientid),
     KVStoreStatus PutPhase1Internal(1:string key, 2:string value, 3:string clientid),
     KVStoreStatus PutPhase2Internal(1:string key, 2:bool commit, 3:string clientid),
+    SyncResponse Sync()
     //GetListResponse GetList(1:string key),
     //KVStoreStatus AddToList(1:string key, 2:string value, 3:string clientid),
     //KVStoreStatus RemoveFromList(1:string key, 2:string value, 3:string clientid)
