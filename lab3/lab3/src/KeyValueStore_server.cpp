@@ -79,6 +79,20 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     }
 
     // ATTEMPT TO SYNC WITH ONE OF THE OTHER SERVERS
+    for(unsigned int i = 0; i < _backendServerVector.size(); i++)
+    {
+        cout << "trying to sync" << endl;
+        bool synced = sync(_backendServerVector[i].first, _backendServerVector[i].second);
+        if(synced)
+        {
+            cout << "successfully synced" << endl;
+            break;
+        }
+    }
+
+    // if we got here, we either successfully sync-ed OR there was not a single server to sync with so we are starting from scratch, in either case we are ready to begin
+    _initialized = true;
+    cout << "Ready to begin" << endl;
   }
 
   void Get(GetResponse& _return, const std::string& key) {
@@ -139,11 +153,11 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     vector<pair<string, int> >::iterator iter = _backendServerVector.begin();
     while(iter != _backendServerVector.end())
     {
-        boost::shared_ptr<TSocket> socket(new TSocket(iter->first, iter->second));
-        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-        KeyValueStoreClient client(protocol);
         try {
+            boost::shared_ptr<TSocket> socket(new TSocket(iter->first, iter->second));
+            boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+            boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+            KeyValueStoreClient client(protocol);
             transport->open();
             string out_clientid("tribbleserver");
             KVStoreStatus::type put_st = client.PutPhase1Internal(key, new_value, out_clientid, _myVectorTimestamp);
@@ -261,25 +275,49 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     // Your implementation goes here
     printf("Sync\n");
 
-    _return.kvs = _kvs;
-    _return.status = KVStoreStatus::OK;
+    if(_initialized == true)
+    {
+        _return.kvs = _kvs;
+        _return.status = KVStoreStatus::OK;
+    }
+    else
+        _return.status = KVStoreStatus::INTERNAL_FAILURE;
   }
 
-  void sync(string server, int port)
+  bool sync(string server, int port)
   {
     // Making the RPC Call to the kv server
-    boost::shared_ptr<TSocket> socket(new TSocket(server, port));
-    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    KeyValueStoreClient client(protocol);
-    transport->open();
-    SyncResponse response;
-    client.Sync(response);
-    transport->close();
+    cout << "In the sync method" << endl;
+    try
+    {
+        boost::shared_ptr<TSocket> socket(new TSocket(server, port));
+        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+        KeyValueStoreClient client(protocol);
+        transport->open();
+        SyncResponse response;
+        client.Sync(response);
+        transport->close();
 
-    // NEED TO CATCH EXCEPTIONS!?!??!?!?!?!?!?!??!?!?!?!?!??!?!?!?!?!?!?!?!?
+        // NEED TO CATCH EXCEPTIONS!?!??!?!?!?!?!?!??!?!?!?!?!??!?!?!?!?!?!?!?!?
 
-    _kvs = response.kvs;
+        if(response.status == KVStoreStatus::OK)
+        {
+            _kvs = response.kvs;
+            _initialized = true;
+            return true;
+        }
+        else
+        {
+            cout << "server responded with a non OK msg" << endl;
+            return false;
+        }
+    }
+    catch (...)
+    {
+        cout << "Caught an exception in sync" << endl;
+        return false;
+    }
   }
 
   bool IsAlive() {
