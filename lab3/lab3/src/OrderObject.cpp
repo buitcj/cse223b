@@ -7,8 +7,8 @@ struct Ordering {
   enum type {
     LT,
     GT,
-    EQ,
-    UNK
+    EQ // ,
+    // UNK <- if unknown ordering, order by server id
   };
 };
 

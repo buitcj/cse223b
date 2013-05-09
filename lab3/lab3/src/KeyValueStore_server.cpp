@@ -16,6 +16,7 @@ TODO:
 */
 
 #include "KeyValueStore.h"
+#include <algorithm>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
@@ -23,6 +24,9 @@ TODO:
 
 // JULIAN ADDED***
 #include <transport/TSocket.h>
+
+#define JSON_IS_AMALGAMATION
+#include <json/json.h>
 // END JULIAN ADDED***
 
 using namespace ::apache::thrift;
@@ -38,12 +42,23 @@ using namespace  ::KeyValueStore;
 class KeyValueStoreHandler : virtual public KeyValueStoreIf {
  public:
   string SET_PREFIX;
+  string TIMESTAMPS;
+
+  void vectorTimestampToJson(std::vector<int>& vec, Json::Value& root)
+  {
+    root = Json::Value(Json::arrayValue);
+    for(unsigned int i = 0; i < vec.size(); i++)
+    {
+        root.append(Json::Value(vec.at(i)));
+    }
+  }
 
   KeyValueStoreHandler(int argc, char** argv) {
     // Your initialization goes here
     _initialized = false;
     SET_PREFIX = "set_";
-
+    TIMESTAMPS = "timestamps";
+    
     _id = atoi(argv[1]);
     int index = 0;
 
@@ -57,11 +72,17 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
       cout << "Backend server at: " << peer_ip << " on port: " << peer_port << endl;
     }
 
+    _origNumServers = (int) _backendServerVector.size() + 1; // + 1 for myself
+    for(int i = 0; i < _origNumServers; i++)
+    {
+        _myVectorTimestamp.push_back(0);
+    }
+
     // ATTEMPT TO SYNC WITH ONE OF THE OTHER SERVERS
   }
 
   void Get(GetResponse& _return, const std::string& key) {
-    printf("Get\n");
+    cout << "Get called on key: " << key << endl;
     map<string, string>::iterator iter;
     if((iter = _kvs.find(key)) == _kvs.end())
     {
@@ -72,6 +93,7 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
 
     _return.status = KVStoreStatus::OK;
     _return.value = iter->second;
+    cout << "Get found: " << _return.value << endl;
     return;
   }
 
@@ -81,8 +103,36 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     // call PutPhase2Internal on all the backend servers
     // return ok if there are still servers
 
-    printf("Put\n");
+    cout << "Put called for key: " << key << endl;
 
+    incClock();
+
+    string new_value = value;
+
+    printf("\tEntering phase1\n");
+
+    // INSERT THE TIMESTAMP
+    // only if it's a set we want to insert the timestamp
+    if((int) key.length() > 4 && key.substr(0, 4).compare(SET_PREFIX) == 0)
+    {
+        Json::Value tribble_set;
+        Json::Reader reader;
+        bool parse_ret_val = reader.parse(value, tribble_set);
+        if(parse_ret_val == false)
+        {
+            return KVStoreStatus::INTERNAL_FAILURE;
+        }
+
+        Json::Value json_ts;
+        vectorTimestampToJson(_myVectorTimestamp, json_ts);        
+
+        tribble_set[TIMESTAMPS].append(json_ts);
+
+        Json::StyledWriter writer;
+        new_value = writer.write(tribble_set);
+    }
+
+    printf("\tEntering phase1\n");
 
     // PHASE 1 ===========================
     vector<pair<string, int> >::iterator iter = _backendServerVector.begin();
@@ -95,7 +145,7 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
         try {
             transport->open();
             string out_clientid("tribbleserver");
-            KVStoreStatus::type put_st = client.PutPhase1Internal(key, value, out_clientid);
+            KVStoreStatus::type put_st = client.PutPhase1Internal(key, new_value, out_clientid, _myVectorTimestamp);
             transport->close();
 
             if(put_st != KVStoreStatus::OK)
@@ -115,6 +165,8 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
             iter = _backendServerVector.erase(iter);
         }
     } 
+
+    printf("\tEntering phase2\n");
 
     // PHASE 2 =================
     iter = _backendServerVector.begin();
@@ -148,16 +200,30 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
         }
     } 
 
+    printf("\tDone with phase2\n");
+
+    /*
+    We probably never care if the KVS doesn't have any peers - it'll always have itself (forever alone)
+    
     // at this point, _backendServerVector size will have been reduced because if any servers died.  
     if(_backendServerVector.size() == 0)
     {   
+        printf("Failure: No more KVS peers\n");
         return KVStoreStatus::INTERNAL_FAILURE;
     }
+    */
+
+    _kvs[key] = new_value;
 
     return KVStoreStatus::OK;
   }
 
-  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) {
+  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid, const std::vector<int32_t>& vec_timestamp) {
+    printf("PutPhase1Internal\n");
+
+    incClock();
+    updateMyVectorTimestamp(vec_timestamp);
+
     //  just stick the key/value into the commit buffer
     pair<string, string> put_op(key, value);
     _uncommittedBuffer.push_back(put_op);
@@ -166,6 +232,8 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
 
   KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid) {
     printf("PutPhase2Internal\n");
+
+    incClock();
     
     // SHOULD PROBABLY HAVE A GUID FOR MULTIPLE PUTS TO THE SAME KEY ********************
     list<pair<string, string> >::iterator iter = _uncommittedBuffer.begin();
@@ -194,9 +262,63 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     _return.status = KVStoreStatus::OK;
   }
 
+  void sync(string server, int port)
+  {
+    // Making the RPC Call to the kv server
+    boost::shared_ptr<TSocket> socket(new TSocket(server, port));
+    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    KeyValueStoreClient client(protocol);
+    transport->open();
+    SyncResponse response;
+    client.Sync(response);
+    transport->close();
+
+    // NEED TO CATCH EXCEPTIONS!?!??!?!?!?!?!?!??!?!?!?!?!??!?!?!?!?!?!?!?!?
+
+    _kvs = response.kvs;
+  }
+
+  bool IsAlive() {
+    // Your implementation goes here
+    printf("isAlive\n");
+    return true;
+  }
+
+  bool isAlive(string server, int port)
+  {
+    // Making the RPC Call to the kv server
+    boost::shared_ptr<TSocket> socket(new TSocket(server, port));
+    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    KeyValueStoreClient client(protocol);
+    transport->open();
+    bool is_alive = client.IsAlive();
+    transport->close();
+
+    // NEED TO CATCH EXCEPTIONS!?!??!?!?!?!?!?!??!?!?!?!?!??!?!?!?!?!?!?!?!?
+
+    return is_alive;
+  }
+
+  void incClock()
+  {
+    _myVectorTimestamp[_id] = _myVectorTimestamp[_id] + 1;
+  }
+
+  void updateMyVectorTimestamp(const vector<int32_t>& ts)
+  {
+    for(unsigned int i = 0; i < ts.size(); i++)
+    {
+        _myVectorTimestamp[i] = max(ts[i], _myVectorTimestamp[i]); 
+    }
+  }
+
   private:
     int _id;
     vector < pair<string, int> > _backendServerVector;
+    int _origNumServers;
+    vector<int> _myVectorTimestamp;
     map<string, string> _kvs;
     bool _initialized;
 

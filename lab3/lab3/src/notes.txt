@@ -27,6 +27,11 @@ struct KVStoreStatus {
   };
 };
 
+struct SyncResponse {
+    1: KVStoreStatus status,
+    2: map<string, string> kvs
+}
+
 GetResponse
   KVStoreStatus::type status;
   std::string value;

@@ -53,13 +53,6 @@ class TribblerHandler : virtual public TribblerIf {
 
   unsigned int MAX_MSGS;
 
-  /*
-  bool compare(const TribbleHelper& lhs, const TribbleHelper& rhs)
-  {
-      return (lhs.tribble_set[lhs.idx][TIMESTAMP].asInt64() < rhs.tribble_set[rhs.idx][TIMESTAMP].asInt64());
-  }
-  */
-
   void addTribbleHelper(list<TribbleHelper>& ths, TribbleHelper& th)
   {
     list<TribbleHelper>::iterator iter = ths.begin();
@@ -164,7 +157,8 @@ class TribblerHandler : virtual public TribblerIf {
     KeyValueStore::GetResponse get_ret_val = Get(string(USER_PREFIX).append(userid));
     if(get_ret_val.status == KVStoreStatus::OK || get_ret_val.value.length() != 0)
     {
-       return TribbleStatus::EEXISTS;
+        cout << "User already exists: " << userid << endl;
+        return TribbleStatus::EEXISTS;
     }
 
     // user does not exist, so create the json and put it
@@ -458,9 +452,10 @@ class TribblerHandler : virtual public TribblerIf {
         {
             Tribble t;
             std::vector<int64_t> vec;
-            getVectorTimestamp(vec, tribble_set[TIMESTAMPS][tribble_set.size() - j - 1]);
+            getVectorTimestamp(vec, tribble_set[TIMESTAMPS][tribble_set[TRIBBLES].size() - j - 1]);
             t.posted = vec;
-            t.contents = tribble_set[TRIBBLES][tribble_set.size() - j - 1].asString();
+            t.contents = tribble_set[TRIBBLES][tribble_set[TRIBBLES].size() - j - 1].asString();
+            cout << "\tGetTribbles found tribble: " << t.contents << endl;
             t.userid = userid;
             _return.tribbles.push_back(t);
             count++;

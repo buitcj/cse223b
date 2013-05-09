@@ -412,6 +412,26 @@ uint32_t KeyValueStore_PutPhase1Internal_args::read(::apache::thrift::protocol::
           xfer += iprot->skip(ftype);
         }
         break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->vec_timestamp.clear();
+            uint32_t _size19;
+            ::apache::thrift::protocol::TType _etype22;
+            xfer += iprot->readListBegin(_etype22, _size19);
+            this->vec_timestamp.resize(_size19);
+            uint32_t _i23;
+            for (_i23 = 0; _i23 < _size19; ++_i23)
+            {
+              xfer += iprot->readI32(this->vec_timestamp[_i23]);
+            }
+            xfer += iprot->readListEnd();
+          }
+          this->__isset.vec_timestamp = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -440,6 +460,18 @@ uint32_t KeyValueStore_PutPhase1Internal_args::write(::apache::thrift::protocol:
   xfer += oprot->writeString(this->clientid);
   xfer += oprot->writeFieldEnd();
 
+  xfer += oprot->writeFieldBegin("vec_timestamp", ::apache::thrift::protocol::T_LIST, 4);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I32, static_cast<uint32_t>(this->vec_timestamp.size()));
+    std::vector<int32_t> ::const_iterator _iter24;
+    for (_iter24 = this->vec_timestamp.begin(); _iter24 != this->vec_timestamp.end(); ++_iter24)
+    {
+      xfer += oprot->writeI32((*_iter24));
+    }
+    xfer += oprot->writeListEnd();
+  }
+  xfer += oprot->writeFieldEnd();
+
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -459,6 +491,18 @@ uint32_t KeyValueStore_PutPhase1Internal_pargs::write(::apache::thrift::protocol
 
   xfer += oprot->writeFieldBegin("clientid", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeString((*(this->clientid)));
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("vec_timestamp", ::apache::thrift::protocol::T_LIST, 4);
+  {
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I32, static_cast<uint32_t>((*(this->vec_timestamp)).size()));
+    std::vector<int32_t> ::const_iterator _iter25;
+    for (_iter25 = (*(this->vec_timestamp)).begin(); _iter25 != (*(this->vec_timestamp)).end(); ++_iter25)
+    {
+      xfer += oprot->writeI32((*_iter25));
+    }
+    xfer += oprot->writeListEnd();
+  }
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -488,9 +532,9 @@ uint32_t KeyValueStore_PutPhase1Internal_result::read(::apache::thrift::protocol
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast19;
-          xfer += iprot->readI32(ecast19);
-          this->success = (KVStoreStatus::type)ecast19;
+          int32_t ecast26;
+          xfer += iprot->readI32(ecast26);
+          this->success = (KVStoreStatus::type)ecast26;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -546,9 +590,9 @@ uint32_t KeyValueStore_PutPhase1Internal_presult::read(::apache::thrift::protoco
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast20;
-          xfer += iprot->readI32(ecast20);
-          (*(this->success)) = (KVStoreStatus::type)ecast20;
+          int32_t ecast27;
+          xfer += iprot->readI32(ecast27);
+          (*(this->success)) = (KVStoreStatus::type)ecast27;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -686,9 +730,9 @@ uint32_t KeyValueStore_PutPhase2Internal_result::read(::apache::thrift::protocol
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast21;
-          xfer += iprot->readI32(ecast21);
-          this->success = (KVStoreStatus::type)ecast21;
+          int32_t ecast28;
+          xfer += iprot->readI32(ecast28);
+          this->success = (KVStoreStatus::type)ecast28;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -744,9 +788,9 @@ uint32_t KeyValueStore_PutPhase2Internal_presult::read(::apache::thrift::protoco
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast22;
-          xfer += iprot->readI32(ecast22);
-          (*(this->success)) = (KVStoreStatus::type)ecast22;
+          int32_t ecast29;
+          xfer += iprot->readI32(ecast29);
+          (*(this->success)) = (KVStoreStatus::type)ecast29;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -905,6 +949,147 @@ uint32_t KeyValueStore_Sync_presult::read(::apache::thrift::protocol::TProtocol*
   return xfer;
 }
 
+uint32_t KeyValueStore_IsAlive_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    xfer += iprot->skip(ftype);
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t KeyValueStore_IsAlive_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("KeyValueStore_IsAlive_args");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t KeyValueStore_IsAlive_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("KeyValueStore_IsAlive_pargs");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t KeyValueStore_IsAlive_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t KeyValueStore_IsAlive_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("KeyValueStore_IsAlive_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
+    xfer += oprot->writeBool(this->success);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t KeyValueStore_IsAlive_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
 void KeyValueStoreClient::Get(GetResponse& _return, const std::string& key)
 {
   send_Get(key);
@@ -1023,13 +1208,13 @@ KVStoreStatus::type KeyValueStoreClient::recv_Put()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "Put failed: unknown result");
 }
 
-KVStoreStatus::type KeyValueStoreClient::PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid)
+KVStoreStatus::type KeyValueStoreClient::PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid, const std::vector<int32_t> & vec_timestamp)
 {
-  send_PutPhase1Internal(key, value, clientid);
+  send_PutPhase1Internal(key, value, clientid, vec_timestamp);
   return recv_PutPhase1Internal();
 }
 
-void KeyValueStoreClient::send_PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid)
+void KeyValueStoreClient::send_PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid, const std::vector<int32_t> & vec_timestamp)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("PutPhase1Internal", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -1038,6 +1223,7 @@ void KeyValueStoreClient::send_PutPhase1Internal(const std::string& key, const s
   args.key = &key;
   args.value = &value;
   args.clientid = &clientid;
+  args.vec_timestamp = &vec_timestamp;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -1200,6 +1386,63 @@ void KeyValueStoreClient::recv_Sync(SyncResponse& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "Sync failed: unknown result");
 }
 
+bool KeyValueStoreClient::IsAlive()
+{
+  send_IsAlive();
+  return recv_IsAlive();
+}
+
+void KeyValueStoreClient::send_IsAlive()
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("IsAlive", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  KeyValueStore_IsAlive_pargs args;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+bool KeyValueStoreClient::recv_IsAlive()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("IsAlive") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  bool _return;
+  KeyValueStore_IsAlive_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    return _return;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "IsAlive failed: unknown result");
+}
+
 bool KeyValueStoreProcessor::dispatchCall(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, const std::string& fname, int32_t seqid, void* callContext) {
   ProcessMap::iterator pfn;
   pfn = processMap_.find(fname);
@@ -1350,7 +1593,7 @@ void KeyValueStoreProcessor::process_PutPhase1Internal(int32_t seqid, ::apache::
 
   KeyValueStore_PutPhase1Internal_result result;
   try {
-    result.success = iface_->PutPhase1Internal(args.key, args.value, args.clientid);
+    result.success = iface_->PutPhase1Internal(args.key, args.value, args.clientid, args.vec_timestamp);
     result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
@@ -1486,6 +1729,60 @@ void KeyValueStoreProcessor::process_Sync(int32_t seqid, ::apache::thrift::proto
 
   if (this->eventHandler_.get() != NULL) {
     this->eventHandler_->postWrite(ctx, "KeyValueStore.Sync", bytes);
+  }
+}
+
+void KeyValueStoreProcessor::process_IsAlive(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (this->eventHandler_.get() != NULL) {
+    ctx = this->eventHandler_->getContext("KeyValueStore.IsAlive", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "KeyValueStore.IsAlive");
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preRead(ctx, "KeyValueStore.IsAlive");
+  }
+
+  KeyValueStore_IsAlive_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postRead(ctx, "KeyValueStore.IsAlive", bytes);
+  }
+
+  KeyValueStore_IsAlive_result result;
+  try {
+    result.success = iface_->IsAlive();
+    result.__isset.success = true;
+  } catch (const std::exception& e) {
+    if (this->eventHandler_.get() != NULL) {
+      this->eventHandler_->handlerError(ctx, "KeyValueStore.IsAlive");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("IsAlive", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preWrite(ctx, "KeyValueStore.IsAlive");
+  }
+
+  oprot->writeMessageBegin("IsAlive", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postWrite(ctx, "KeyValueStore.IsAlive", bytes);
   }
 }
 

@@ -48,9 +48,10 @@ struct SyncResponse {
 service KeyValueStore {
     GetResponse Get(1:string key),
     KVStoreStatus Put(1:string key, 2:string value, 3:string clientid),
-    KVStoreStatus PutPhase1Internal(1:string key, 2:string value, 3:string clientid),
+    KVStoreStatus PutPhase1Internal(1:string key, 2:string value, 3:string clientid, 4:list<i32> vec_timestamp),
     KVStoreStatus PutPhase2Internal(1:string key, 2:bool commit, 3:string clientid),
     SyncResponse Sync()
+    bool IsAlive();
     //GetListResponse GetList(1:string key),
     //KVStoreStatus AddToList(1:string key, 2:string value, 3:string clientid),
     //KVStoreStatus RemoveFromList(1:string key, 2:string value, 3:string clientid)

@@ -17,9 +17,10 @@ class KeyValueStoreIf {
   virtual ~KeyValueStoreIf() {}
   virtual void Get(GetResponse& _return, const std::string& key) = 0;
   virtual KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid) = 0;
-  virtual KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) = 0;
+  virtual KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid, const std::vector<int32_t> & vec_timestamp) = 0;
   virtual KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid) = 0;
   virtual void Sync(SyncResponse& _return) = 0;
+  virtual bool IsAlive() = 0;
 };
 
 class KeyValueStoreIfFactory {
@@ -56,7 +57,7 @@ class KeyValueStoreNull : virtual public KeyValueStoreIf {
     KVStoreStatus::type _return = (KVStoreStatus::type)0;
     return _return;
   }
-  KVStoreStatus::type PutPhase1Internal(const std::string& /* key */, const std::string& /* value */, const std::string& /* clientid */) {
+  KVStoreStatus::type PutPhase1Internal(const std::string& /* key */, const std::string& /* value */, const std::string& /* clientid */, const std::vector<int32_t> & /* vec_timestamp */) {
     KVStoreStatus::type _return = (KVStoreStatus::type)0;
     return _return;
   }
@@ -66,6 +67,10 @@ class KeyValueStoreNull : virtual public KeyValueStoreIf {
   }
   void Sync(SyncResponse& /* _return */) {
     return;
+  }
+  bool IsAlive() {
+    bool _return = false;
+    return _return;
   }
 };
 
@@ -304,10 +309,11 @@ class KeyValueStore_Put_presult {
 };
 
 typedef struct _KeyValueStore_PutPhase1Internal_args__isset {
-  _KeyValueStore_PutPhase1Internal_args__isset() : key(false), value(false), clientid(false) {}
+  _KeyValueStore_PutPhase1Internal_args__isset() : key(false), value(false), clientid(false), vec_timestamp(false) {}
   bool key;
   bool value;
   bool clientid;
+  bool vec_timestamp;
 } _KeyValueStore_PutPhase1Internal_args__isset;
 
 class KeyValueStore_PutPhase1Internal_args {
@@ -321,6 +327,7 @@ class KeyValueStore_PutPhase1Internal_args {
   std::string key;
   std::string value;
   std::string clientid;
+  std::vector<int32_t>  vec_timestamp;
 
   _KeyValueStore_PutPhase1Internal_args__isset __isset;
 
@@ -336,6 +343,10 @@ class KeyValueStore_PutPhase1Internal_args {
     clientid = val;
   }
 
+  void __set_vec_timestamp(const std::vector<int32_t> & val) {
+    vec_timestamp = val;
+  }
+
   bool operator == (const KeyValueStore_PutPhase1Internal_args & rhs) const
   {
     if (!(key == rhs.key))
@@ -343,6 +354,8 @@ class KeyValueStore_PutPhase1Internal_args {
     if (!(value == rhs.value))
       return false;
     if (!(clientid == rhs.clientid))
+      return false;
+    if (!(vec_timestamp == rhs.vec_timestamp))
       return false;
     return true;
   }
@@ -367,6 +380,7 @@ class KeyValueStore_PutPhase1Internal_pargs {
   const std::string* key;
   const std::string* value;
   const std::string* clientid;
+  const std::vector<int32_t> * vec_timestamp;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -649,6 +663,100 @@ class KeyValueStore_Sync_presult {
 
 };
 
+
+class KeyValueStore_IsAlive_args {
+ public:
+
+  KeyValueStore_IsAlive_args() {
+  }
+
+  virtual ~KeyValueStore_IsAlive_args() throw() {}
+
+
+  bool operator == (const KeyValueStore_IsAlive_args & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const KeyValueStore_IsAlive_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const KeyValueStore_IsAlive_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class KeyValueStore_IsAlive_pargs {
+ public:
+
+
+  virtual ~KeyValueStore_IsAlive_pargs() throw() {}
+
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _KeyValueStore_IsAlive_result__isset {
+  _KeyValueStore_IsAlive_result__isset() : success(false) {}
+  bool success;
+} _KeyValueStore_IsAlive_result__isset;
+
+class KeyValueStore_IsAlive_result {
+ public:
+
+  KeyValueStore_IsAlive_result() : success(0) {
+  }
+
+  virtual ~KeyValueStore_IsAlive_result() throw() {}
+
+  bool success;
+
+  _KeyValueStore_IsAlive_result__isset __isset;
+
+  void __set_success(const bool val) {
+    success = val;
+  }
+
+  bool operator == (const KeyValueStore_IsAlive_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const KeyValueStore_IsAlive_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const KeyValueStore_IsAlive_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _KeyValueStore_IsAlive_presult__isset {
+  _KeyValueStore_IsAlive_presult__isset() : success(false) {}
+  bool success;
+} _KeyValueStore_IsAlive_presult__isset;
+
+class KeyValueStore_IsAlive_presult {
+ public:
+
+
+  virtual ~KeyValueStore_IsAlive_presult() throw() {}
+
+  bool* success;
+
+  _KeyValueStore_IsAlive_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class KeyValueStoreClient : virtual public KeyValueStoreIf {
  public:
   KeyValueStoreClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :
@@ -675,8 +783,8 @@ class KeyValueStoreClient : virtual public KeyValueStoreIf {
   KVStoreStatus::type Put(const std::string& key, const std::string& value, const std::string& clientid);
   void send_Put(const std::string& key, const std::string& value, const std::string& clientid);
   KVStoreStatus::type recv_Put();
-  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid);
-  void send_PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid);
+  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid, const std::vector<int32_t> & vec_timestamp);
+  void send_PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid, const std::vector<int32_t> & vec_timestamp);
   KVStoreStatus::type recv_PutPhase1Internal();
   KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid);
   void send_PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid);
@@ -684,6 +792,9 @@ class KeyValueStoreClient : virtual public KeyValueStoreIf {
   void Sync(SyncResponse& _return);
   void send_Sync();
   void recv_Sync(SyncResponse& _return);
+  bool IsAlive();
+  void send_IsAlive();
+  bool recv_IsAlive();
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -704,6 +815,7 @@ class KeyValueStoreProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_PutPhase1Internal(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_PutPhase2Internal(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_Sync(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_IsAlive(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   KeyValueStoreProcessor(boost::shared_ptr<KeyValueStoreIf> iface) :
     iface_(iface) {
@@ -712,6 +824,7 @@ class KeyValueStoreProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["PutPhase1Internal"] = &KeyValueStoreProcessor::process_PutPhase1Internal;
     processMap_["PutPhase2Internal"] = &KeyValueStoreProcessor::process_PutPhase2Internal;
     processMap_["Sync"] = &KeyValueStoreProcessor::process_Sync;
+    processMap_["IsAlive"] = &KeyValueStoreProcessor::process_IsAlive;
   }
 
   virtual ~KeyValueStoreProcessor() {}
@@ -759,13 +872,13 @@ class KeyValueStoreMultiface : virtual public KeyValueStoreIf {
     return ifaces_[i]->Put(key, value, clientid);
   }
 
-  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid) {
+  KVStoreStatus::type PutPhase1Internal(const std::string& key, const std::string& value, const std::string& clientid, const std::vector<int32_t> & vec_timestamp) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->PutPhase1Internal(key, value, clientid);
+      ifaces_[i]->PutPhase1Internal(key, value, clientid, vec_timestamp);
     }
-    return ifaces_[i]->PutPhase1Internal(key, value, clientid);
+    return ifaces_[i]->PutPhase1Internal(key, value, clientid, vec_timestamp);
   }
 
   KVStoreStatus::type PutPhase2Internal(const std::string& key, const bool commit, const std::string& clientid) {
@@ -785,6 +898,15 @@ class KeyValueStoreMultiface : virtual public KeyValueStoreIf {
     }
     ifaces_[i]->Sync(_return);
     return;
+  }
+
+  bool IsAlive() {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->IsAlive();
+    }
+    return ifaces_[i]->IsAlive();
   }
 
 };

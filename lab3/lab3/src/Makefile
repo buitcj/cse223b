@@ -3,7 +3,7 @@ BOOST_DIR := /usr/local/include
 INCLUDE := ../include
 TRIBBLER_SRC := Tribbler.cpp Tribbler_constants.cpp Tribbler_types.cpp OrderObject.cpp jsoncpp.cpp
 TRIBBLER_OBJ := $(patsubst %.cpp,%.o, $(TRIBBLER_SRC))
-KV_SRC := KeyValueStore.cpp KeyValueStore_types.cpp KeyValueStore_constants.cpp
+KV_SRC := KeyValueStore.cpp KeyValueStore_types.cpp KeyValueStore_constants.cpp jsoncpp.cpp
 KV_OBJ := $(patsubst %.cpp,%.o, $(KV_SRC))
 
 INC := -I$(THRIFT_DIR) -I$(BOOST_DIR) -I$(INCLUDE)
