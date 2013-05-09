@@ -43,6 +43,7 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
  public:
   string SET_PREFIX;
   string TIMESTAMPS;
+  string HOST_IDS;
 
   void vectorTimestampToJson(std::vector<int>& vec, Json::Value& root)
   {
@@ -58,14 +59,11 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     _initialized = false;
     SET_PREFIX = "set_";
     TIMESTAMPS = "timestamps";
+    HOST_IDS = "hostids";
     
     _id = atoi(argv[1]);
-    int index = 0;
 
     for(int i = 3; i+1 < argc; i += 2) {
-      if (index == _id) {
-        _backendServerVector.push_back(make_pair("localhost", atoi(argv[2])));
-      }
       string peer_ip(argv[i]);
       int peer_port = atoi(argv[i+1]);
       _backendServerVector.push_back(make_pair(peer_ip, peer_port));
@@ -73,6 +71,8 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     }
 
     _origNumServers = (int) _backendServerVector.size() + 1; // + 1 for myself
+
+    cout << "original num servers: " << _origNumServers << endl;
     for(int i = 0; i < _origNumServers; i++)
     {
         _myVectorTimestamp.push_back(0);
@@ -127,6 +127,7 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
         vectorTimestampToJson(_myVectorTimestamp, json_ts);        
 
         tribble_set[TIMESTAMPS].append(json_ts);
+        tribble_set[HOST_IDS].append(_id);
 
         Json::StyledWriter writer;
         new_value = writer.write(tribble_set);
@@ -214,6 +215,8 @@ class KeyValueStoreHandler : virtual public KeyValueStoreIf {
     */
 
     _kvs[key] = new_value;
+
+    cout << "Put placed: " << new_value << endl;
 
     return KVStoreStatus::OK;
   }

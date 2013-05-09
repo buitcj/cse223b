@@ -1,71 +1,71 @@
 #include <vector>
+#include <iostream>
+#include "OrderObject.h"
 using namespace std;
+using namespace Tribbler;
 
-namespace Tribbler{
+Ordering::type OrderObject::compare(OrderObject& lhs, OrderObject& rhs)
+{
+    return lhs.compare(rhs);
+}
 
-struct Ordering {
-  enum type {
-    LT,
-    GT,
-    EQ // ,
-    // UNK <- if unknown ordering, order by server id
-  };
-};
+bool OrderObject::operator> (OrderObject const & o2) const
+{
+    if(compare(o2) == Ordering::GT)
+        return true;
+    else
+        return false;
+}
 
-class OrderObject {
-public:
-    vector<int> _vt;
-    int _hostid;
-    
-    static Ordering::type compare(OrderObject& lhs, OrderObject& rhs)
+Ordering::type OrderObject::compare(const OrderObject& oo) const
+{
+    cout << "Starting compare" << endl;
+
+    // ASSUMES equal sized vecs 
+    if(oo._vt.size() != _vt.size())
     {
-        return lhs.compare(rhs);
+        cout << "VECS ARE NOT THE SAME SIZE*********" << endl;
+        cout << "\t" << oo._vt.size() << endl;
+        cout << "\t" << _vt.size() << endl;
     }
 
-    Ordering::type compare(OrderObject& oo)
+    bool foundLarger = false;
+    bool foundSmaller = false;
+    for(unsigned int i = 0; i < oo._vt.size(); i++)
     {
-        // ASSUMES vck
-        bool foundLarger = false;
-        bool foundSmaller = false;
-        for(unsigned int i = 0; i < oo._vt.size(); i++)
+        if(_vt[i] < oo._vt[i])
         {
-            if(_vt[i] < oo._vt[i])
-            {
-                foundSmaller = true;
-            }
-            else if(_vt[i] > oo._vt[i])
-            {
-                foundLarger = true;
-            }
+            foundSmaller = true;
         }
+        else if(_vt[i] > oo._vt[i])
+        {
+            foundLarger = true;
+        }
+    }
 
-        if(foundSmaller && !foundLarger)
+    if(foundSmaller && !foundLarger)
+    {
+        return Ordering::LT;
+    }
+    else if(!foundSmaller && foundLarger)
+    {
+        return Ordering::GT;
+    }
+    else if(foundSmaller && foundLarger)
+    {
+        // unk
+        if(_hostid < oo._hostid)
         {
             return Ordering::LT;
         }
-        else if(!foundSmaller && foundLarger)
+        else
         {
             return Ordering::GT;
         }
-        else if(foundSmaller && foundLarger)
-        {
-            // unk
-            if(_hostid < oo._hostid)
-            {
-                return Ordering::LT;
-            }
-            else
-            {
-                return Ordering::GT;
-            }
-        }
-        else // (!foundLarger && !foundSmaller)
-        {
-            return Ordering::EQ;
-        }
     }
-};
-
-
-
-};
+    else // (!foundLarger && !foundSmaller)
+    {
+        return Ordering::EQ;
+    }
+    cout << "Got thru compare" << endl;
+}

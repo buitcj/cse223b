@@ -16,6 +16,7 @@
 
 #define JSON_IS_AMALGAMATION
 #include <json/json.h>
+#include "OrderObject.h"
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -32,7 +33,8 @@ struct TribbleHelper
 {
     Json::Value tribble_set;
     string userid;
-    std::vector<int64_t> ts;
+    OrderObject oo;
+    // std::vector<int> ts;
     int set;
     int idx;
 };
@@ -46,6 +48,7 @@ class TribblerHandler : virtual public TribblerIf {
 
   string TRIBBLES;
   string TIMESTAMPS;
+  string HOST_IDS;
   string MSG;
 
   string CUR_SET_NUM;
@@ -55,33 +58,39 @@ class TribblerHandler : virtual public TribblerIf {
 
   void addTribbleHelper(list<TribbleHelper>& ths, TribbleHelper& th)
   {
+    cout << "Starting addTribbleHelper" << endl;
+    cout << "ths size: " << ths.size() << endl;
     list<TribbleHelper>::iterator iter = ths.begin();
-    // FIX THIS ***************************************************** 
-    while(iter != ths.end() && iter->ts > th.ts)
+    while(iter != ths.end() && iter->oo > th.oo)
     {
+        cout << "addTribbleHelper pt 1" << endl;
         iter++;
     }
     ths.insert(iter, th);
+    cout << "Done with addTribbleHelper" << endl;
   }
 
   void printThs(list<TribbleHelper>& ths)
   {
+    /*
+    CODE BELOW NO LONGER WORKS BECAUSE OF NEW STRUCTURE OF TRIBBLE SET
     list<TribbleHelper>::iterator  it = ths.begin();
     while(it != ths.end())
     {
         cout << "\t" << it->userid << endl;
         for(unsigned int i = 0; i < it->tribble_set.size(); i++)
         {
-            vector<int64_t> vec_ts;
+            vector<int> vec_ts;
             getVectorTimestamp(vec_ts, it->tribble_set[TIMESTAMPS][it->tribble_set.size() - i - 1]);
             cout << "\t\t" << it->tribble_set[it->tribble_set.size() - i - 1][MSG].asString() << " " << printVectorTimestampOneLine(vec_ts) << endl;
         }
         it++;
     }
     cout << "---" << endl;
+    */
   }
 
-  void printVectorTimestamp(std::vector<int64_t>&vec)
+  void printVectorTimestamp(std::vector<int>&vec)
   {
     cout << "[" << endl;
     unsigned int i = 0;
@@ -93,7 +102,7 @@ class TribblerHandler : virtual public TribblerIf {
     cout << "]" << endl;
   }
 
-  string printVectorTimestampOneLine(std::vector<int64_t>&vec)
+  string printVectorTimestampOneLine(std::vector<int>&vec)
   {
     string s_num;
     string ret_val = "[";
@@ -115,20 +124,20 @@ class TribblerHandler : virtual public TribblerIf {
     return ret_val;
   }
 
-  void getVectorTimestamp(std::vector<int64_t>& vec, Json::Value& root)
+  void getVectorTimestamp(std::vector<int>& vec, Json::Value& root)
   {
     for(unsigned int i = 0; i < root.size(); i++)
     {
-        vec.push_back(root[i].asInt64());
+        vec.push_back(root[i].asInt());
     } 
   }
 
-  void vectorTimestampToJson(std::vector<int64_t>& vec, Json::Value& root)
+  void vectorTimestampToJson(std::vector<int>& vec, Json::Value& root)
   {
     root = Json::Value(Json::arrayValue);
     for(unsigned int i = 0; i < vec.size(); i++)
     {
-        root.append(Json::Value((Json::Int64)vec.at(i)));
+        root.append(Json::Value((Json::Int)vec.at(i)));
     }
   }
 
@@ -139,6 +148,7 @@ class TribblerHandler : virtual public TribblerIf {
     MAX_SET_SIZE = 5;
     TRIBBLES = "tribbles";
     TIMESTAMPS = "timestamps";
+    HOST_IDS = "hostids";
     MSG = "msg";
     CUR_SET_NUM = "curSetNum";
     LIST_OF_SUBSCRIBERS = "listOfSubscribers";
@@ -451,9 +461,9 @@ class TribblerHandler : virtual public TribblerIf {
         for(unsigned int j = 0; j < tribble_set[TRIBBLES].size() && count < MAX_MSGS; j++)
         {
             Tribble t;
-            std::vector<int64_t> vec;
-            getVectorTimestamp(vec, tribble_set[TIMESTAMPS][tribble_set[TRIBBLES].size() - j - 1]);
-            t.posted = vec;
+            //std::vector<int64_t> vec;
+            //getVectorTimestamp(vec, tribble_set[TIMESTAMPS][tribble_set[TRIBBLES].size() - j - 1]);
+            //t.posted = vec;
             t.contents = tribble_set[TRIBBLES][tribble_set[TRIBBLES].size() - j - 1].asString();
             cout << "\tGetTribbles found tribble: " << t.contents << endl;
             t.userid = userid;
@@ -548,6 +558,7 @@ class TribblerHandler : virtual public TribblerIf {
                 }
                 else
                 {
+                    // subscribeto has posted something but is on a new set
                     th.set = th.set - 1;
                     sprintf(buf, "%d", th.set);
                     get_set_ret_val = Get(string(SET_PREFIX).append(buf).append("_").append(th.userid));
@@ -558,11 +569,12 @@ class TribblerHandler : virtual public TribblerIf {
                     }
                 }
             }
-            th.idx = tribble_set.size() - 1;
+            th.idx = tribble_set[TRIBBLES].size() - 1; // -1 accts for 0 indexing
             th.tribble_set = tribble_set;
-            std::vector<int64_t> vec;
+            std::vector<int> vec;
             getVectorTimestamp(vec, tribble_set[TIMESTAMPS][th.idx]);
-            th.ts = vec;
+            th.oo._vt = vec;
+            th.oo._hostid = tribble_set[HOST_IDS][th.idx].asInt();
 
             addTribbleHelper(ths, th);
         }
@@ -575,7 +587,7 @@ class TribblerHandler : virtual public TribblerIf {
         while(_return.tribbles.size() < MAX_MSGS && ths.size() > 0)
         {
             Tribble t;
-            t.posted = ths.front().ts;
+            // t.posted = ths.front().ts;
             t.userid = ths.front().userid;
             t.contents = ths.front().tribble_set[TRIBBLES][ths.front().idx].asString();
             ths.front().idx = ths.front().idx - 1;
@@ -619,13 +631,22 @@ class TribblerHandler : virtual public TribblerIf {
                     front.tribble_set = tribble_set;
                 }
             }
+            cout << "GetTribblesBySubscription pt 5" << endl;
 
             // ensure that the timestamp is updated to the new
-            std::vector<int64_t> vec;
+            std::vector<int> vec;
             getVectorTimestamp(vec, front.tribble_set[TIMESTAMPS][front.idx]);
-            front.ts = vec;
+
+            if(vec.size() == 0) 
+                cout << "VEC SIZE WAS 0****************" << endl;
+
+            front.oo._vt = vec;
+            front.oo._hostid = front.tribble_set[HOST_IDS][front.idx].asInt();
+            cout << "GetTribblesBySubscription pt 6" << endl;
 
             addTribbleHelper(ths, front); // since th has new timestamp, we need to insert it back in sorted order
+            
+            cout << "GetTribblesBySubscription pt 7" << endl;
 
             // done with consistency check
         }
@@ -745,7 +766,6 @@ class TribblerHandler : virtual public TribblerIf {
  private:
   std::string _kvServer;
   int _kvServerPort;
-  std::vector<int64_t> _ts;
 };
 
 int main(int argc, char **argv) {
