@@ -738,28 +738,42 @@ class TribblerHandler : virtual public TribblerIf {
 
   KVStoreStatus::type Put(std::string key, std::string value) {
     // Making the RPC Call to the kv server
-    boost::shared_ptr<TSocket> socket(new TSocket(_kvServer, _kvServerPort));
-    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    KeyValueStoreClient client(protocol);
     KVStoreStatus::type st;
-    transport->open();
-    string clientid("tribbleserver");
-    st = client.Put(key, value, clientid);
-    transport->close();
+    try 
+    {
+        boost::shared_ptr<TSocket> socket(new TSocket(_kvServer, _kvServerPort));
+        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+        KeyValueStoreClient client(protocol);
+        transport->open();
+        string clientid("tribbleserver");
+        st = client.Put(key, value, clientid);
+        transport->close();
+    }
+    catch (...)
+    {
+        st = KVStoreStatus::INTERNAL_FAILURE; 
+    }
     return st;
   }
 
   KeyValueStore::GetResponse Get(std::string key) {
     KeyValueStore::GetResponse response;
     // Making the RPC Call to the kv server
-    boost::shared_ptr<TSocket> socket(new TSocket(_kvServer, _kvServerPort));
-    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    KeyValueStoreClient client(protocol);
-    transport->open();
-    client.Get(response, key);
-    transport->close();
+    try
+    {
+        boost::shared_ptr<TSocket> socket(new TSocket(_kvServer, _kvServerPort));
+        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+        KeyValueStoreClient client(protocol);
+        transport->open();
+        client.Get(response, key);
+        transport->close();
+    }
+    catch (...) 
+    {
+        response.status = KVStoreStatus::INTERNAL_FAILURE;
+    }
     return response;
   }
 
