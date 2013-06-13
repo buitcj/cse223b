@@ -290,7 +290,9 @@ uint32_t BackupServer_AddPoint_result::read(::apache::thrift::protocol::TProtoco
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->success);
+          int32_t ecast7;
+          xfer += iprot->readI32(ecast7);
+          this->success = (BackupServerStatus::type)ecast7;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -316,7 +318,7 @@ uint32_t BackupServer_AddPoint_result::write(::apache::thrift::protocol::TProtoc
 
   if (this->__isset.success) {
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_I32, 0);
-    xfer += oprot->writeI32(this->success);
+    xfer += oprot->writeI32((int32_t)this->success);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -346,7 +348,9 @@ uint32_t BackupServer_AddPoint_presult::read(::apache::thrift::protocol::TProtoc
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32((*(this->success)));
+          int32_t ecast8;
+          xfer += iprot->readI32(ecast8);
+          (*(this->success)) = (BackupServerStatus::type)ecast8;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -364,160 +368,13 @@ uint32_t BackupServer_AddPoint_presult::read(::apache::thrift::protocol::TProtoc
   return xfer;
 }
 
-uint32_t BackupServer_Commit_args::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->p.read(iprot);
-          this->__isset.p = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->id);
-          this->__isset.id = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t BackupServer_Commit_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("BackupServer_Commit_args");
-
-  xfer += oprot->writeFieldBegin("p", ::apache::thrift::protocol::T_STRUCT, 1);
-  xfer += this->p.write(oprot);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("id", ::apache::thrift::protocol::T_I32, 2);
-  xfer += oprot->writeI32(this->id);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-uint32_t BackupServer_Commit_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("BackupServer_Commit_pargs");
-
-  xfer += oprot->writeFieldBegin("p", ::apache::thrift::protocol::T_STRUCT, 1);
-  xfer += (*(this->p)).write(oprot);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("id", ::apache::thrift::protocol::T_I32, 2);
-  xfer += oprot->writeI32((*(this->id)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-uint32_t BackupServer_Commit_result::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    xfer += iprot->skip(ftype);
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t BackupServer_Commit_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
-
-  uint32_t xfer = 0;
-
-  xfer += oprot->writeStructBegin("BackupServer_Commit_result");
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-uint32_t BackupServer_Commit_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    xfer += iprot->skip(ftype);
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-void BackupServerClient::GetPointsInRegion(GetPointsResponse& _return, const Point& ul, const Point& lr)
+void BackupServerClient::GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ul, const ThriftGeoPoint& lr)
 {
   send_GetPointsInRegion(ul, lr);
   recv_GetPointsInRegion(_return);
 }
 
-void BackupServerClient::send_GetPointsInRegion(const Point& ul, const Point& lr)
+void BackupServerClient::send_GetPointsInRegion(const ThriftGeoPoint& ul, const ThriftGeoPoint& lr)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("GetPointsInRegion", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -570,13 +427,13 @@ void BackupServerClient::recv_GetPointsInRegion(GetPointsResponse& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "GetPointsInRegion failed: unknown result");
 }
 
-int32_t BackupServerClient::AddPoint(const Point& p, const std::string& desc)
+BackupServerStatus::type BackupServerClient::AddPoint(const ThriftGeoPoint& p, const std::string& desc)
 {
   send_AddPoint(p, desc);
   return recv_AddPoint();
 }
 
-void BackupServerClient::send_AddPoint(const Point& p, const std::string& desc)
+void BackupServerClient::send_AddPoint(const ThriftGeoPoint& p, const std::string& desc)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("AddPoint", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -591,7 +448,7 @@ void BackupServerClient::send_AddPoint(const Point& p, const std::string& desc)
   oprot_->getTransport()->flush();
 }
 
-int32_t BackupServerClient::recv_AddPoint()
+BackupServerStatus::type BackupServerClient::recv_AddPoint()
 {
 
   int32_t rseqid = 0;
@@ -616,7 +473,7 @@ int32_t BackupServerClient::recv_AddPoint()
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
   }
-  int32_t _return;
+  BackupServerStatus::type _return;
   BackupServer_AddPoint_presult result;
   result.success = &_return;
   result.read(iprot_);
@@ -627,60 +484,6 @@ int32_t BackupServerClient::recv_AddPoint()
     return _return;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "AddPoint failed: unknown result");
-}
-
-void BackupServerClient::Commit(const Point& p, const int32_t id)
-{
-  send_Commit(p, id);
-  recv_Commit();
-}
-
-void BackupServerClient::send_Commit(const Point& p, const int32_t id)
-{
-  int32_t cseqid = 0;
-  oprot_->writeMessageBegin("Commit", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  BackupServer_Commit_pargs args;
-  args.p = &p;
-  args.id = &id;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-}
-
-void BackupServerClient::recv_Commit()
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-    ::apache::thrift::TApplicationException x;
-    x.read(iprot_);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-    throw x;
-  }
-  if (mtype != ::apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  if (fname.compare("Commit") != 0) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  BackupServer_Commit_presult result;
-  result.read(iprot_);
-  iprot_->readMessageEnd();
-  iprot_->getTransport()->readEnd();
-
-  return;
 }
 
 bool BackupServerProcessor::dispatchCall(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, const std::string& fname, int32_t seqid, void* callContext) {
@@ -807,59 +610,6 @@ void BackupServerProcessor::process_AddPoint(int32_t seqid, ::apache::thrift::pr
 
   if (this->eventHandler_.get() != NULL) {
     this->eventHandler_->postWrite(ctx, "BackupServer.AddPoint", bytes);
-  }
-}
-
-void BackupServerProcessor::process_Commit(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
-{
-  void* ctx = NULL;
-  if (this->eventHandler_.get() != NULL) {
-    ctx = this->eventHandler_->getContext("BackupServer.Commit", callContext);
-  }
-  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "BackupServer.Commit");
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preRead(ctx, "BackupServer.Commit");
-  }
-
-  BackupServer_Commit_args args;
-  args.read(iprot);
-  iprot->readMessageEnd();
-  uint32_t bytes = iprot->getTransport()->readEnd();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postRead(ctx, "BackupServer.Commit", bytes);
-  }
-
-  BackupServer_Commit_result result;
-  try {
-    iface_->Commit(args.p, args.id);
-  } catch (const std::exception& e) {
-    if (this->eventHandler_.get() != NULL) {
-      this->eventHandler_->handlerError(ctx, "BackupServer.Commit");
-    }
-
-    ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("Commit", ::apache::thrift::protocol::T_EXCEPTION, seqid);
-    x.write(oprot);
-    oprot->writeMessageEnd();
-    oprot->getTransport()->writeEnd();
-    oprot->getTransport()->flush();
-    return;
-  }
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preWrite(ctx, "BackupServer.Commit");
-  }
-
-  oprot->writeMessageBegin("Commit", ::apache::thrift::protocol::T_REPLY, seqid);
-  result.write(oprot);
-  oprot->writeMessageEnd();
-  bytes = oprot->getTransport()->writeEnd();
-  oprot->getTransport()->flush();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postWrite(ctx, "BackupServer.Commit", bytes);
   }
 }
 

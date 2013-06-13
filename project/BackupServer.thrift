@@ -15,15 +15,16 @@ enum BackupServerStatus {
  * Return type for a Get(key) RPC call to the storage server.
  */
 
-struct Point {
-    1: double x,
-    2: double y
+struct ThriftGeoPoint {
+    1: double xCoord,
+    2: double yCoord,
+    3: string message
 }
 
 struct GetPointsResponse
 {
     1: BackupServerStatus status,
-    2: list<Point> pts
+    2: list<ThriftGeoPoint> pts
 }
 
 /**
@@ -31,7 +32,6 @@ struct GetPointsResponse
  */
 
 service BackupServer {
-    GetPointsResponse GetPointsInRegion(1:Point ul, 2:Point lr),
-    i32 AddPoint(1:Point p, 2:string desc),
-    void Commit(1:Point p, 2:i32 id)
+    GetPointsResponse GetPointsInRegion(1:ThriftGeoPoint ul, 2:ThriftGeoPoint lr),
+    BackupServerStatus AddPoint(1:ThriftGeoPoint p, 2:string desc)
 }

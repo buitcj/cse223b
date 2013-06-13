@@ -25,56 +25,64 @@ struct BackupServerStatus {
 
 extern const std::map<int, const char*> _BackupServerStatus_VALUES_TO_NAMES;
 
-typedef struct _Point__isset {
-  _Point__isset() : x(false), y(false) {}
-  bool x;
-  bool y;
-} _Point__isset;
+typedef struct _ThriftGeoPoint__isset {
+  _ThriftGeoPoint__isset() : xCoord(false), yCoord(false), message(false) {}
+  bool xCoord;
+  bool yCoord;
+  bool message;
+} _ThriftGeoPoint__isset;
 
-class Point {
+class ThriftGeoPoint {
  public:
 
-  static const char* ascii_fingerprint; // = "EA2086D2BB14222991D7B0497DE7B58B";
-  static const uint8_t binary_fingerprint[16]; // = {0xEA,0x20,0x86,0xD2,0xBB,0x14,0x22,0x29,0x91,0xD7,0xB0,0x49,0x7D,0xE7,0xB5,0x8B};
+  static const char* ascii_fingerprint; // = "3141FDB05C98B5AB301A852FF546E1D6";
+  static const uint8_t binary_fingerprint[16]; // = {0x31,0x41,0xFD,0xB0,0x5C,0x98,0xB5,0xAB,0x30,0x1A,0x85,0x2F,0xF5,0x46,0xE1,0xD6};
 
-  Point() : x(0), y(0) {
+  ThriftGeoPoint() : xCoord(0), yCoord(0), message() {
   }
 
-  virtual ~Point() throw() {}
+  virtual ~ThriftGeoPoint() throw() {}
 
-  double x;
-  double y;
+  double xCoord;
+  double yCoord;
+  std::string message;
 
-  _Point__isset __isset;
+  _ThriftGeoPoint__isset __isset;
 
-  void __set_x(const double val) {
-    x = val;
+  void __set_xCoord(const double val) {
+    xCoord = val;
   }
 
-  void __set_y(const double val) {
-    y = val;
+  void __set_yCoord(const double val) {
+    yCoord = val;
   }
 
-  bool operator == (const Point & rhs) const
+  void __set_message(const std::string& val) {
+    message = val;
+  }
+
+  bool operator == (const ThriftGeoPoint & rhs) const
   {
-    if (!(x == rhs.x))
+    if (!(xCoord == rhs.xCoord))
       return false;
-    if (!(y == rhs.y))
+    if (!(yCoord == rhs.yCoord))
+      return false;
+    if (!(message == rhs.message))
       return false;
     return true;
   }
-  bool operator != (const Point &rhs) const {
+  bool operator != (const ThriftGeoPoint &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const Point & ) const;
+  bool operator < (const ThriftGeoPoint & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-void swap(Point &a, Point &b);
+void swap(ThriftGeoPoint &a, ThriftGeoPoint &b);
 
 typedef struct _GetPointsResponse__isset {
   _GetPointsResponse__isset() : status(false), pts(false) {}
@@ -85,8 +93,8 @@ typedef struct _GetPointsResponse__isset {
 class GetPointsResponse {
  public:
 
-  static const char* ascii_fingerprint; // = "671E4DE9FBAA549FF6625A8B38B682DB";
-  static const uint8_t binary_fingerprint[16]; // = {0x67,0x1E,0x4D,0xE9,0xFB,0xAA,0x54,0x9F,0xF6,0x62,0x5A,0x8B,0x38,0xB6,0x82,0xDB};
+  static const char* ascii_fingerprint; // = "D2DECD9CC7A2C0EB10E445BFA1082098";
+  static const uint8_t binary_fingerprint[16]; // = {0xD2,0xDE,0xCD,0x9C,0xC7,0xA2,0xC0,0xEB,0x10,0xE4,0x45,0xBF,0xA1,0x08,0x20,0x98};
 
   GetPointsResponse() : status((BackupServerStatus::type)0) {
   }
@@ -94,7 +102,7 @@ class GetPointsResponse {
   virtual ~GetPointsResponse() throw() {}
 
   BackupServerStatus::type status;
-  std::vector<Point>  pts;
+  std::vector<ThriftGeoPoint>  pts;
 
   _GetPointsResponse__isset __isset;
 
@@ -102,7 +110,7 @@ class GetPointsResponse {
     status = val;
   }
 
-  void __set_pts(const std::vector<Point> & val) {
+  void __set_pts(const std::vector<ThriftGeoPoint> & val) {
     pts = val;
   }
 

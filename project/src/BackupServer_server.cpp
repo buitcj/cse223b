@@ -2,7 +2,6 @@
 // You should copy it to another filename to avoid overwriting it.
 
 #include "BackupServer.h"
-#include <libpq-fe.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
@@ -15,31 +14,22 @@ using namespace ::apache::thrift::server;
 
 using boost::shared_ptr;
 
-using namespace std;
 using namespace  ::BackupServer;
 
 class BackupServerHandler : virtual public BackupServerIf {
- private: 
-    vector<Point> pts;
  public:
   BackupServerHandler() {
     // Your initialization goes here
   }
 
-  void GetPointsInRegion(GetPointsResponse& _return, const Point& ul, const Point& lr) {
+  void GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ul, const ThriftGeoPoint& lr) {
     // Your implementation goes here
     printf("GetPointsInRegion\n");
   }
 
-  int32_t AddPoint(const Point& p, const std::string& desc) {
+  BackupServerStatus::type AddPoint(const ThriftGeoPoint& p, const std::string& desc) {
     // Your implementation goes here
     printf("AddPoint\n");
-    return (int32_t) 3;
-  }
-
-  void Commit(const Point& p, const int32_t id) {
-    // Your implementation goes here
-    printf("Commit\n");
   }
 
 };

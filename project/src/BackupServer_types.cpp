@@ -20,10 +20,10 @@ const char* _kBackupServerStatusNames[] = {
 };
 const std::map<int, const char*> _BackupServerStatus_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(2, _kBackupServerStatusValues, _kBackupServerStatusNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
 
-const char* Point::ascii_fingerprint = "EA2086D2BB14222991D7B0497DE7B58B";
-const uint8_t Point::binary_fingerprint[16] = {0xEA,0x20,0x86,0xD2,0xBB,0x14,0x22,0x29,0x91,0xD7,0xB0,0x49,0x7D,0xE7,0xB5,0x8B};
+const char* ThriftGeoPoint::ascii_fingerprint = "3141FDB05C98B5AB301A852FF546E1D6";
+const uint8_t ThriftGeoPoint::binary_fingerprint[16] = {0x31,0x41,0xFD,0xB0,0x5C,0x98,0xB5,0xAB,0x30,0x1A,0x85,0x2F,0xF5,0x46,0xE1,0xD6};
 
-uint32_t Point::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t ThriftGeoPoint::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
   std::string fname;
@@ -45,16 +45,24 @@ uint32_t Point::read(::apache::thrift::protocol::TProtocol* iprot) {
     {
       case 1:
         if (ftype == ::apache::thrift::protocol::T_DOUBLE) {
-          xfer += iprot->readDouble(this->x);
-          this->__isset.x = true;
+          xfer += iprot->readDouble(this->xCoord);
+          this->__isset.xCoord = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_DOUBLE) {
-          xfer += iprot->readDouble(this->y);
-          this->__isset.y = true;
+          xfer += iprot->readDouble(this->yCoord);
+          this->__isset.yCoord = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->message);
+          this->__isset.message = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -71,16 +79,20 @@ uint32_t Point::read(::apache::thrift::protocol::TProtocol* iprot) {
   return xfer;
 }
 
-uint32_t Point::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t ThriftGeoPoint::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
-  xfer += oprot->writeStructBegin("Point");
+  xfer += oprot->writeStructBegin("ThriftGeoPoint");
 
-  xfer += oprot->writeFieldBegin("x", ::apache::thrift::protocol::T_DOUBLE, 1);
-  xfer += oprot->writeDouble(this->x);
+  xfer += oprot->writeFieldBegin("xCoord", ::apache::thrift::protocol::T_DOUBLE, 1);
+  xfer += oprot->writeDouble(this->xCoord);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("y", ::apache::thrift::protocol::T_DOUBLE, 2);
-  xfer += oprot->writeDouble(this->y);
+  xfer += oprot->writeFieldBegin("yCoord", ::apache::thrift::protocol::T_DOUBLE, 2);
+  xfer += oprot->writeDouble(this->yCoord);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("message", ::apache::thrift::protocol::T_STRING, 3);
+  xfer += oprot->writeString(this->message);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -88,15 +100,16 @@ uint32_t Point::write(::apache::thrift::protocol::TProtocol* oprot) const {
   return xfer;
 }
 
-void swap(Point &a, Point &b) {
+void swap(ThriftGeoPoint &a, ThriftGeoPoint &b) {
   using ::std::swap;
-  swap(a.x, b.x);
-  swap(a.y, b.y);
+  swap(a.xCoord, b.xCoord);
+  swap(a.yCoord, b.yCoord);
+  swap(a.message, b.message);
   swap(a.__isset, b.__isset);
 }
 
-const char* GetPointsResponse::ascii_fingerprint = "671E4DE9FBAA549FF6625A8B38B682DB";
-const uint8_t GetPointsResponse::binary_fingerprint[16] = {0x67,0x1E,0x4D,0xE9,0xFB,0xAA,0x54,0x9F,0xF6,0x62,0x5A,0x8B,0x38,0xB6,0x82,0xDB};
+const char* GetPointsResponse::ascii_fingerprint = "D2DECD9CC7A2C0EB10E445BFA1082098";
+const uint8_t GetPointsResponse::binary_fingerprint[16] = {0xD2,0xDE,0xCD,0x9C,0xC7,0xA2,0xC0,0xEB,0x10,0xE4,0x45,0xBF,0xA1,0x08,0x20,0x98};
 
 uint32_t GetPointsResponse::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -171,7 +184,7 @@ uint32_t GetPointsResponse::write(::apache::thrift::protocol::TProtocol* oprot) 
   xfer += oprot->writeFieldBegin("pts", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->pts.size()));
-    std::vector<Point> ::const_iterator _iter6;
+    std::vector<ThriftGeoPoint> ::const_iterator _iter6;
     for (_iter6 = this->pts.begin(); _iter6 != this->pts.end(); ++_iter6)
     {
       xfer += (*_iter6).write(oprot);

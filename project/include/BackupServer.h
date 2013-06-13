@@ -15,9 +15,8 @@ namespace BackupServer {
 class BackupServerIf {
  public:
   virtual ~BackupServerIf() {}
-  virtual void GetPointsInRegion(GetPointsResponse& _return, const Point& ul, const Point& lr) = 0;
-  virtual int32_t AddPoint(const Point& p, const std::string& desc) = 0;
-  virtual void Commit(const Point& p, const int32_t id) = 0;
+  virtual void GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ul, const ThriftGeoPoint& lr) = 0;
+  virtual BackupServerStatus::type AddPoint(const ThriftGeoPoint& p, const std::string& desc) = 0;
 };
 
 class BackupServerIfFactory {
@@ -47,15 +46,12 @@ class BackupServerIfSingletonFactory : virtual public BackupServerIfFactory {
 class BackupServerNull : virtual public BackupServerIf {
  public:
   virtual ~BackupServerNull() {}
-  void GetPointsInRegion(GetPointsResponse& /* _return */, const Point& /* ul */, const Point& /* lr */) {
+  void GetPointsInRegion(GetPointsResponse& /* _return */, const ThriftGeoPoint& /* ul */, const ThriftGeoPoint& /* lr */) {
     return;
   }
-  int32_t AddPoint(const Point& /* p */, const std::string& /* desc */) {
-    int32_t _return = 0;
+  BackupServerStatus::type AddPoint(const ThriftGeoPoint& /* p */, const std::string& /* desc */) {
+    BackupServerStatus::type _return = (BackupServerStatus::type)0;
     return _return;
-  }
-  void Commit(const Point& /* p */, const int32_t /* id */) {
-    return;
   }
 };
 
@@ -73,16 +69,16 @@ class BackupServer_GetPointsInRegion_args {
 
   virtual ~BackupServer_GetPointsInRegion_args() throw() {}
 
-  Point ul;
-  Point lr;
+  ThriftGeoPoint ul;
+  ThriftGeoPoint lr;
 
   _BackupServer_GetPointsInRegion_args__isset __isset;
 
-  void __set_ul(const Point& val) {
+  void __set_ul(const ThriftGeoPoint& val) {
     ul = val;
   }
 
-  void __set_lr(const Point& val) {
+  void __set_lr(const ThriftGeoPoint& val) {
     lr = val;
   }
 
@@ -112,8 +108,8 @@ class BackupServer_GetPointsInRegion_pargs {
 
   virtual ~BackupServer_GetPointsInRegion_pargs() throw() {}
 
-  const Point* ul;
-  const Point* lr;
+  const ThriftGeoPoint* ul;
+  const ThriftGeoPoint* lr;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -190,12 +186,12 @@ class BackupServer_AddPoint_args {
 
   virtual ~BackupServer_AddPoint_args() throw() {}
 
-  Point p;
+  ThriftGeoPoint p;
   std::string desc;
 
   _BackupServer_AddPoint_args__isset __isset;
 
-  void __set_p(const Point& val) {
+  void __set_p(const ThriftGeoPoint& val) {
     p = val;
   }
 
@@ -229,7 +225,7 @@ class BackupServer_AddPoint_pargs {
 
   virtual ~BackupServer_AddPoint_pargs() throw() {}
 
-  const Point* p;
+  const ThriftGeoPoint* p;
   const std::string* desc;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -244,16 +240,16 @@ typedef struct _BackupServer_AddPoint_result__isset {
 class BackupServer_AddPoint_result {
  public:
 
-  BackupServer_AddPoint_result() : success(0) {
+  BackupServer_AddPoint_result() : success((BackupServerStatus::type)0) {
   }
 
   virtual ~BackupServer_AddPoint_result() throw() {}
 
-  int32_t success;
+  BackupServerStatus::type success;
 
   _BackupServer_AddPoint_result__isset __isset;
 
-  void __set_success(const int32_t val) {
+  void __set_success(const BackupServerStatus::type val) {
     success = val;
   }
 
@@ -285,106 +281,9 @@ class BackupServer_AddPoint_presult {
 
   virtual ~BackupServer_AddPoint_presult() throw() {}
 
-  int32_t* success;
+  BackupServerStatus::type* success;
 
   _BackupServer_AddPoint_presult__isset __isset;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-
-};
-
-typedef struct _BackupServer_Commit_args__isset {
-  _BackupServer_Commit_args__isset() : p(false), id(false) {}
-  bool p;
-  bool id;
-} _BackupServer_Commit_args__isset;
-
-class BackupServer_Commit_args {
- public:
-
-  BackupServer_Commit_args() : id(0) {
-  }
-
-  virtual ~BackupServer_Commit_args() throw() {}
-
-  Point p;
-  int32_t id;
-
-  _BackupServer_Commit_args__isset __isset;
-
-  void __set_p(const Point& val) {
-    p = val;
-  }
-
-  void __set_id(const int32_t val) {
-    id = val;
-  }
-
-  bool operator == (const BackupServer_Commit_args & rhs) const
-  {
-    if (!(p == rhs.p))
-      return false;
-    if (!(id == rhs.id))
-      return false;
-    return true;
-  }
-  bool operator != (const BackupServer_Commit_args &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const BackupServer_Commit_args & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class BackupServer_Commit_pargs {
- public:
-
-
-  virtual ~BackupServer_Commit_pargs() throw() {}
-
-  const Point* p;
-  const int32_t* id;
-
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class BackupServer_Commit_result {
- public:
-
-  BackupServer_Commit_result() {
-  }
-
-  virtual ~BackupServer_Commit_result() throw() {}
-
-
-  bool operator == (const BackupServer_Commit_result & /* rhs */) const
-  {
-    return true;
-  }
-  bool operator != (const BackupServer_Commit_result &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const BackupServer_Commit_result & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class BackupServer_Commit_presult {
- public:
-
-
-  virtual ~BackupServer_Commit_presult() throw() {}
-
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -410,15 +309,12 @@ class BackupServerClient : virtual public BackupServerIf {
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
-  void GetPointsInRegion(GetPointsResponse& _return, const Point& ul, const Point& lr);
-  void send_GetPointsInRegion(const Point& ul, const Point& lr);
+  void GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ul, const ThriftGeoPoint& lr);
+  void send_GetPointsInRegion(const ThriftGeoPoint& ul, const ThriftGeoPoint& lr);
   void recv_GetPointsInRegion(GetPointsResponse& _return);
-  int32_t AddPoint(const Point& p, const std::string& desc);
-  void send_AddPoint(const Point& p, const std::string& desc);
-  int32_t recv_AddPoint();
-  void Commit(const Point& p, const int32_t id);
-  void send_Commit(const Point& p, const int32_t id);
-  void recv_Commit();
+  BackupServerStatus::type AddPoint(const ThriftGeoPoint& p, const std::string& desc);
+  void send_AddPoint(const ThriftGeoPoint& p, const std::string& desc);
+  BackupServerStatus::type recv_AddPoint();
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -436,13 +332,11 @@ class BackupServerProcessor : public ::apache::thrift::TDispatchProcessor {
   ProcessMap processMap_;
   void process_GetPointsInRegion(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_AddPoint(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_Commit(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   BackupServerProcessor(boost::shared_ptr<BackupServerIf> iface) :
     iface_(iface) {
     processMap_["GetPointsInRegion"] = &BackupServerProcessor::process_GetPointsInRegion;
     processMap_["AddPoint"] = &BackupServerProcessor::process_AddPoint;
-    processMap_["Commit"] = &BackupServerProcessor::process_Commit;
   }
 
   virtual ~BackupServerProcessor() {}
@@ -471,7 +365,7 @@ class BackupServerMultiface : virtual public BackupServerIf {
     ifaces_.push_back(iface);
   }
  public:
-  void GetPointsInRegion(GetPointsResponse& _return, const Point& ul, const Point& lr) {
+  void GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ul, const ThriftGeoPoint& lr) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
@@ -481,22 +375,13 @@ class BackupServerMultiface : virtual public BackupServerIf {
     return;
   }
 
-  int32_t AddPoint(const Point& p, const std::string& desc) {
+  BackupServerStatus::type AddPoint(const ThriftGeoPoint& p, const std::string& desc) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
       ifaces_[i]->AddPoint(p, desc);
     }
     return ifaces_[i]->AddPoint(p, desc);
-  }
-
-  void Commit(const Point& p, const int32_t id) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->Commit(p, id);
-    }
-    ifaces_[i]->Commit(p, id);
   }
 
 };
