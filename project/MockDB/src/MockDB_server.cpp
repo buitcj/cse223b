@@ -39,13 +39,17 @@ class MockDBHandler : virtual public MockDBIf {
     // Your implementation goes here
     printf("GetEndXCoordinate\n");
   }
+void doStuff() {
+    GeoPoint pt(1.0, 2.0);
+    _pts.insert(pair<GeoPoint,int>(pt, 0));
+  }
 
  private:
-	multimap<GeoPoint,int,> _pts;
-
+	multimap<GeoPoint,int> _pts;
 };
 
 int main(int argc, char **argv) {
+  /*
   int port = 9090;
   shared_ptr<MockDBHandler> handler(new MockDBHandler());
   shared_ptr<TProcessor> processor(new MockDBProcessor(handler));
@@ -56,5 +60,10 @@ int main(int argc, char **argv) {
   TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
   server.serve();
   return 0;
+  */
+
+  MockDBHandler mdbh;
+  mdbh.doStuff();
+  
 }
 

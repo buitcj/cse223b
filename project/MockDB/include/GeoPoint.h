@@ -15,7 +15,7 @@ class GeoPoint {
 
 		GeoPoint(void);
 		GeoPoint(float x, float y);
-		inline bool operator < (const GeoPoint& other);
+		bool operator < (const GeoPoint& other) const;
 
 		~GeoPoint(void);
 };
