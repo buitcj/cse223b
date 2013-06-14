@@ -132,6 +132,12 @@ class MockDBHandler : virtual public MockDBIf {
     return 180.0;
   }
 
+  void SetRange(const double start_x_coord, const double end_x_coord) {
+    // Your implementation goes here
+    printf("SetRange\n");
+  }
+
+
  private:
 	multiset<GeoPoint> _pts;
     bool _is_db;

@@ -33,5 +33,6 @@ struct GetPointsResponse
 service MockDB {
     GetPointsResponse GetPointsInRegion(1:ThriftGeoPoint ll, 2:ThriftGeoPoint ur),
     ServerStatus AddPoint(1:ThriftGeoPoint p),
-    double GetEndXCoordinate(1:double start_x_coord, 2:i32 num_points)
+    double GetEndXCoordinate(1:double start_x_coord, 2:i32 num_points),
+    void SetRange(1:double start_x_coord, 2:double end_x_coord)
 }
