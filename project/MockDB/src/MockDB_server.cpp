@@ -26,26 +26,98 @@ class MockDBHandler : virtual public MockDBIf {
   }
 
   void GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ll, const ThriftGeoPoint& ur) {
-    // Your implementation goes here
     printf("GetPointsInRegion\n");
+    GeoPoint lower_pt(ll.xCoord, -90.0);
+    multiset<GeoPoint>::iterator lower_iter = _pts.lower_bound(lower_pt);
+    if(lower_iter != _pts.end())
+    {
+        while(lower_iter != _pts.end() && lower_iter->xCoord <= ur.xCoord)
+        {
+            if(lower_iter->yCoord >= ll.yCoord &&
+               lower_iter->yCoord <= ur.yCoord)
+            {
+                ThriftGeoPoint gpt;
+                gpt.xCoord = lower_iter->xCoord;
+                gpt.yCoord = lower_iter->yCoord;
+                _return.pts.push_back(gpt);
+            }
+            lower_iter++;
+        }
+        _return.status = ServerStatus::OK;
+    }
+    else
+    {
+        _return.status = ServerStatus::OK;
+        _return.pts.clear();
+    }
   }
 
   ServerStatus::type AddPoint(const ThriftGeoPoint& p) {
-    // Your implementation goes here
     printf("AddPoint\n");
+    GeoPoint pt(p.xCoord, p.yCoord);
+    _pts.insert(pt);
+
+    return ServerStatus::OK;
   }
 
   double GetEndXCoordinate(const double start_x_coord, const int32_t num_points) {
-    // Your implementation goes here
+    const double DELTA = 0.0000003;
     printf("GetEndXCoordinate\n");
+    multiset<GeoPoint>::iterator iter;
+    GeoPoint pt(start_x_coord, -90.0);
+    iter = _pts.find(pt);
+    multiset<GeoPoint>::iterator prev_iter;
+    int counter = 0;
+    while(iter != _pts.end() && counter < num_points)
+    {
+        prev_iter = iter;
+        iter++;
+        counter++;
+    }
+
+    // if 0 pts
+    if(prev_iter == _pts.end() && iter == _pts.end())
+    {
+        return start_x_coord + DELTA;
+    }
+    else if(iter == _pts.end() && prev_iter != _pts.end())
+    {
+        // not enough pts after start_x_coord
+        return iter->xCoord;
+    }
+    else if(prev_iter != _pts.end() && iter != _pts.end())
+    {
+        // still pts after the num_points pts have been traversed
+        return iter->xCoord;
+    }
+    else // prev_i doesn't exist but iter does exist
+    {
+        // shouldn't happen!
+    }
+    
+    cout << "***getEndXCoord returning 180, shouldn't have ever happened!" << endl;
+    return 180.0;
   }
+
 void doStuff() {
     GeoPoint pt(1.0, 2.0);
-    _pts.insert(pair<GeoPoint,int>(pt, 0));
+    GeoPoint pt1(2.0, 2.0);
+    GeoPoint pt2(1.0, 1.0);
+    GeoPoint pt3(1.0, 1.5);
+    _pts.insert(pt);
+    _pts.insert(pt1);
+    _pts.insert(pt2);
+    _pts.insert(pt3);
+
+    multiset<GeoPoint>::iterator iter;
+    for(iter = _pts.begin(); iter != _pts.end(); iter++)
+    {
+       cout << iter->xCoord << " " << iter->yCoord << endl; 
+    }
   }
 
  private:
-	multimap<GeoPoint,int> _pts;
+	multiset<GeoPoint> _pts;
 };
 
 int main(int argc, char **argv) {
