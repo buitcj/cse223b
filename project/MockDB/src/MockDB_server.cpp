@@ -77,6 +77,7 @@ class MockDBHandler : virtual public MockDBIf {
     {
         // connect to the db and add the pt 
         string s_db_hostname(_db_hostname);
+
         boost::shared_ptr<TSocket> socket(new TSocket(s_db_hostname, _db_port));
         boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
         boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -85,6 +86,7 @@ class MockDBHandler : virtual public MockDBIf {
         transport->open();
         ServerStatus::type status = mock_client.AddPoint(p);
         transport->close();
+
         return status;
     }
 
@@ -139,15 +141,25 @@ class MockDBHandler : virtual public MockDBIf {
 };
 
 int main(int argc, char **argv) {
-  int port = 4321;
+  int port = -1;
   bool is_db = false;
   int id = -1;
   int db_port = 6666;
   char* c_db_hostname = NULL;
+  
+  cout << "Usage: <myport> < 0 | 1> <id> <db hostname> <db port>" << endl;
+
+  if(argc == 1) 
+  {
+    return 0;
+  }
 
   if(argc > 2)
   {
-    string s_is_db(argv[1]);
+    char* c_port = argv[1];
+    port = atoi(c_port);
+
+    string s_is_db(argv[2]);
     if(s_is_db.compare("1") == 0)
     {
         is_db = true;
@@ -155,32 +167,33 @@ int main(int argc, char **argv) {
     else if(s_is_db.compare("0") != 0)
     {
         cout << "Unrecognized input for is_db" << endl;
+        return 1;
     }
 
-    if(argc > 3 && argc == 6) 
+    if(argc > 4 && argc == 6 && is_db == false) 
     {
-        char* c_port = argv[2];
-        port = atoi(c_port);
+        //only backups need ids
+        char* c_id = argv[3];
+        id = atoi(c_id);
+
+        //only backups need database info
+
+        c_db_hostname = argv[4];
         
-        if(is_db == false)
-        {
-            //only backups need ids
-            char* c_id = argv[3];
-            id = atoi(c_id);
-
-            //only backups need database info
-
-            c_db_hostname = argv[4];
-            
-            //only backups need database port info
-            char* c_db_port = argv[5];
-            db_port = atoi(c_db_port);
-        }
+        //only backups need database port info
+        char* c_db_port = argv[5];
+        db_port = atoi(c_db_port);
     }
-    else
-    {
-        cout << "Usage: < 0 | 1> <port> <db hostname> <db port>" << endl;
-    }
+  }
+
+  if(is_db)
+  {
+    cout << "DB server starting with port: " << port << endl;
+  }
+  else
+  {
+    cout << "Backup server starting with port: " << port << " id: " <<
+        id << " db name: " << c_db_hostname << " db port: " << db_port << endl;
   }
 
   shared_ptr<MockDBHandler> handler;
