@@ -41,6 +41,12 @@ class MockDBHandler : virtual public MockDBIf {
     _is_db = false;
   }
 
+  void init()
+  {
+    _lx = -9999;
+    _rx = 9999;
+  }
+
   void GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ll, const ThriftGeoPoint& ur) {
     printf("GetPointsInRegion\n");
     GeoPoint lower_pt(ll.xCoord, -90.0);
@@ -133,12 +139,51 @@ class MockDBHandler : virtual public MockDBIf {
   }
 
   void SetRange(const double start_x_coord, const double end_x_coord) {
-    // Your implementation goes here
-    printf("SetRange\n");
+    if(_is_db == false)
+    {
+        printf("SetRange\n");
+        string s_db_hostname(_db_hostname);
+
+        boost::shared_ptr<TSocket> socket(new TSocket(s_db_hostname, _db_port));
+        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+        MockDBClient mock_client(protocol);
+        // Making the RPC Call
+
+//GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ll, const ThriftGeoPoint& ur)
+        GetPointsResponse pts;
+
+        ThriftGeoPoint ll;
+        ll.xCoord = -180.0;
+        ll.yCoord = -90.0;
+
+        ThriftGeoPoint ur;
+        ur.xCoord = 180.0;
+        ur.yCoord = 90.0;
+
+        transport->open();
+        mock_client.GetPointsInRegion(pts, ll, ur);
+        transport->close();
+
+        if(pts.status != ServerStatus::FAILED)
+        {
+            _pts.clear();
+            for(unsigned int i = 0; i < pts.pts.size(); i++)
+            {
+                // add all the vector points to the class map
+                GeoPoint gp;
+                gp.xCoord = pts.pts[i].xCoord;
+                gp.yCoord = pts.pts[i].yCoord;
+                _pts.insert(gp);
+            }
+        }
+    }
   }
 
 
  private:
+    double _lx;
+    double _rx;
 	multiset<GeoPoint> _pts;
     bool _is_db;
     int _id;

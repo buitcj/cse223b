@@ -18,6 +18,7 @@ class MockDBIf {
   virtual void GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ll, const ThriftGeoPoint& ur) = 0;
   virtual ServerStatus::type AddPoint(const ThriftGeoPoint& p) = 0;
   virtual double GetEndXCoordinate(const double start_x_coord, const int32_t num_points) = 0;
+  virtual void SetRange(const double start_x_coord, const double end_x_coord) = 0;
 };
 
 class MockDBIfFactory {
@@ -57,6 +58,9 @@ class MockDBNull : virtual public MockDBIf {
   double GetEndXCoordinate(const double /* start_x_coord */, const int32_t /* num_points */) {
     double _return = (double)0;
     return _return;
+  }
+  void SetRange(const double /* start_x_coord */, const double /* end_x_coord */) {
+    return;
   }
 };
 
@@ -402,6 +406,103 @@ class MockDB_GetEndXCoordinate_presult {
 
 };
 
+typedef struct _MockDB_SetRange_args__isset {
+  _MockDB_SetRange_args__isset() : start_x_coord(false), end_x_coord(false) {}
+  bool start_x_coord;
+  bool end_x_coord;
+} _MockDB_SetRange_args__isset;
+
+class MockDB_SetRange_args {
+ public:
+
+  MockDB_SetRange_args() : start_x_coord(0), end_x_coord(0) {
+  }
+
+  virtual ~MockDB_SetRange_args() throw() {}
+
+  double start_x_coord;
+  double end_x_coord;
+
+  _MockDB_SetRange_args__isset __isset;
+
+  void __set_start_x_coord(const double val) {
+    start_x_coord = val;
+  }
+
+  void __set_end_x_coord(const double val) {
+    end_x_coord = val;
+  }
+
+  bool operator == (const MockDB_SetRange_args & rhs) const
+  {
+    if (!(start_x_coord == rhs.start_x_coord))
+      return false;
+    if (!(end_x_coord == rhs.end_x_coord))
+      return false;
+    return true;
+  }
+  bool operator != (const MockDB_SetRange_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const MockDB_SetRange_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class MockDB_SetRange_pargs {
+ public:
+
+
+  virtual ~MockDB_SetRange_pargs() throw() {}
+
+  const double* start_x_coord;
+  const double* end_x_coord;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class MockDB_SetRange_result {
+ public:
+
+  MockDB_SetRange_result() {
+  }
+
+  virtual ~MockDB_SetRange_result() throw() {}
+
+
+  bool operator == (const MockDB_SetRange_result & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const MockDB_SetRange_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const MockDB_SetRange_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class MockDB_SetRange_presult {
+ public:
+
+
+  virtual ~MockDB_SetRange_presult() throw() {}
+
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class MockDBClient : virtual public MockDBIf {
  public:
   MockDBClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :
@@ -431,6 +532,9 @@ class MockDBClient : virtual public MockDBIf {
   double GetEndXCoordinate(const double start_x_coord, const int32_t num_points);
   void send_GetEndXCoordinate(const double start_x_coord, const int32_t num_points);
   double recv_GetEndXCoordinate();
+  void SetRange(const double start_x_coord, const double end_x_coord);
+  void send_SetRange(const double start_x_coord, const double end_x_coord);
+  void recv_SetRange();
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -449,12 +553,14 @@ class MockDBProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_GetPointsInRegion(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_AddPoint(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_GetEndXCoordinate(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_SetRange(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   MockDBProcessor(boost::shared_ptr<MockDBIf> iface) :
     iface_(iface) {
     processMap_["GetPointsInRegion"] = &MockDBProcessor::process_GetPointsInRegion;
     processMap_["AddPoint"] = &MockDBProcessor::process_AddPoint;
     processMap_["GetEndXCoordinate"] = &MockDBProcessor::process_GetEndXCoordinate;
+    processMap_["SetRange"] = &MockDBProcessor::process_SetRange;
   }
 
   virtual ~MockDBProcessor() {}
@@ -509,6 +615,15 @@ class MockDBMultiface : virtual public MockDBIf {
       ifaces_[i]->GetEndXCoordinate(start_x_coord, num_points);
     }
     return ifaces_[i]->GetEndXCoordinate(start_x_coord, num_points);
+  }
+
+  void SetRange(const double start_x_coord, const double end_x_coord) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->SetRange(start_x_coord, end_x_coord);
+    }
+    ifaces_[i]->SetRange(start_x_coord, end_x_coord);
   }
 
 };
