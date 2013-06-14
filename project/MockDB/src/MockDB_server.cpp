@@ -3,10 +3,12 @@
 
 #include "MockDB.h"
 #include "GeoPoint.h"
+#include <stdlib.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <thrift/transport/TSocket.h>
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
@@ -23,6 +25,20 @@ class MockDBHandler : virtual public MockDBIf {
  public:
   MockDBHandler() {
     // Your initialization goes here
+    _is_db = true;
+
+    _id = -1;
+    _db_hostname = NULL;
+    _db_port = -1;
+  }
+
+  MockDBHandler(int id, char* db_hostname, int db_port)
+  {
+    _id = id;
+    _db_hostname = db_hostname;
+    _db_port = db_port;
+
+    _is_db = false;
   }
 
   void GetPointsInRegion(GetPointsResponse& _return, const ThriftGeoPoint& ll, const ThriftGeoPoint& ur) {
@@ -53,9 +69,24 @@ class MockDBHandler : virtual public MockDBIf {
   }
 
   ServerStatus::type AddPoint(const ThriftGeoPoint& p) {
-    printf("AddPoint\n");
+    cout << "AddPoint called: (" << p.xCoord << "," << p.yCoord << ")" << endl;
     GeoPoint pt(p.xCoord, p.yCoord);
     _pts.insert(pt);
+
+    if(_is_db == false)
+    {
+        // connect to the db and add the pt 
+        string s_db_hostname(_db_hostname);
+        boost::shared_ptr<TSocket> socket(new TSocket(s_db_hostname, _db_port));
+        boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+        boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+        MockDBClient mock_client(protocol);
+        // Making the RPC Call
+        transport->open();
+        ServerStatus::type status = mock_client.AddPoint(p);
+        transport->close();
+        return status;
+    }
 
     return ServerStatus::OK;
   }
@@ -99,31 +130,68 @@ class MockDBHandler : virtual public MockDBIf {
     return 180.0;
   }
 
-void doStuff() {
-    GeoPoint pt(1.0, 2.0);
-    GeoPoint pt1(2.0, 2.0);
-    GeoPoint pt2(1.0, 1.0);
-    GeoPoint pt3(1.0, 1.5);
-    _pts.insert(pt);
-    _pts.insert(pt1);
-    _pts.insert(pt2);
-    _pts.insert(pt3);
-
-    multiset<GeoPoint>::iterator iter;
-    for(iter = _pts.begin(); iter != _pts.end(); iter++)
-    {
-       cout << iter->xCoord << " " << iter->yCoord << endl; 
-    }
-  }
-
  private:
 	multiset<GeoPoint> _pts;
+    bool _is_db;
+    int _id;
+    char* _db_hostname;
+    int _db_port;
 };
 
 int main(int argc, char **argv) {
-  /*
-  int port = 9090;
-  shared_ptr<MockDBHandler> handler(new MockDBHandler());
+  int port = 4321;
+  bool is_db = false;
+  int id = -1;
+  int db_port = 6666;
+  char* c_db_hostname = NULL;
+
+  if(argc > 2)
+  {
+    string s_is_db(argv[1]);
+    if(s_is_db.compare("1") == 0)
+    {
+        is_db = true;
+    }
+    else if(s_is_db.compare("0") != 0)
+    {
+        cout << "Unrecognized input for is_db" << endl;
+    }
+
+    if(argc > 3 && argc == 6) 
+    {
+        char* c_port = argv[2];
+        port = atoi(c_port);
+        
+        if(is_db == false)
+        {
+            //only backups need ids
+            char* c_id = argv[3];
+            id = atoi(c_id);
+
+            //only backups need database info
+
+            c_db_hostname = argv[4];
+            
+            //only backups need database port info
+            char* c_db_port = argv[5];
+            db_port = atoi(c_db_port);
+        }
+    }
+    else
+    {
+        cout << "Usage: < 0 | 1> <port> <db hostname> <db port>" << endl;
+    }
+  }
+
+  shared_ptr<MockDBHandler> handler;
+  if(is_db)
+  {
+    handler = shared_ptr<MockDBHandler>(new MockDBHandler());
+  }
+  else
+  {
+    handler = shared_ptr<MockDBHandler>(new MockDBHandler(id, c_db_hostname, db_port)); 
+  }
   shared_ptr<TProcessor> processor(new MockDBProcessor(handler));
   shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
   shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
@@ -132,10 +200,5 @@ int main(int argc, char **argv) {
   TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
   server.serve();
   return 0;
-  */
-
-  MockDBHandler mdbh;
-  mdbh.doStuff();
-  
 }
 
